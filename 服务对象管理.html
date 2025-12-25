@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务对象管理 - 居家长护业务管理系统</title>
+    <!-- 引入外部资源 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        /* 继承全局样式 */
+        body { font-family: "微软雅黑", "思源黑体", sans-serif; background-color: #f5f7fa; color: #333; }
+        .btn-primary { background-color: #1890FF; border-color: #1890FF; }
+        .btn-primary:hover { background-color: #096DD9; border-color: #096DD9; }
+        .btn-outline-secondary { border-color: #ddd; color: #666; }
+        .btn-outline-secondary:hover { background-color: #f5f5f5; border-color: #ccc; }
+        .btn-danger { background-color: #FF4D4F; border-color: #FF4D4F; }
+        .btn-danger:hover { background-color: #F5222D; border-color: #F5222D; }
+        .btn-success { background-color: #52C41A; border-color: #52C41A; }
+        .btn-success:hover { background-color: #389E0D; border-color: #389E0D; }
+        .btn-warning { background-color: #FAAD14; border-color: #FAAD14; }
+        .btn-warning:hover { background-color: #D48806; border-color: #D48806; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; padding: 15px 20px; font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 20px; }
+        /* 布局样式 */
+        .app-container { display: flex; min-height: 100vh; }
+        /* 侧边导航 */
+        .sidebar { width: 220px; background: #fff; box-shadow: 1px 0 2px rgba(0,0,0,0.05); padding: 20px 0; flex-shrink: 0; }
+        .sidebar-logo { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+        .sidebar-logo img { height: 40px; margin-bottom: 8px; }
+        .sidebar-logo h3 { font-size: 16px; color: #1890FF; font-weight: 600; margin: 0; }
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 4px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; color: #666; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .nav-link:hover, .nav-link.active { color: #1890FF; background-color: #f0f7ff; border-left: 3px solid #1890FF; }
+        .nav-link i { font-size: 18px; margin-right: 12px; width: 20px; text-align: center; }
+        .nav-group-title { padding: 15px 20px 5px; font-size: 12px; color: #999; font-weight: 500; }
+        /* 主内容区 */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        /* 顶部导航 */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+        .user-info { display: flex; align-items: center; }
+        .notification { position: relative; margin-right: 20px; cursor: pointer; }
+        .notification i { font-size: 20px; color: #666; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #FF4D4F; color: #fff; border-radius: 50%; font-size: 12px; text-align: center; line-height: 18px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #1890FF; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; margin-right: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .user-avatar:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3); }
+        .user-name { font-size: 14px; font-weight: 500; }
+        /* 二维码模态框样式 */
+        .qrcode-modal .modal-body { text-align: center; padding: 30px; }
+        .qrcode-container { display: inline-block; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .qrcode-container canvas { display: block; margin: 0 auto; }
+        .qrcode-info { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .qrcode-info-item { margin-bottom: 10px; font-size: 14px; }
+        .qrcode-info-item:last-child { margin-bottom: 0; }
+        .qrcode-info-label { color: #666; font-weight: 500; display: inline-block; width: 100px; }
+        .qrcode-info-value { color: #333; }
+        .qrcode-tip { color: #666; font-size: 13px; margin-top: 15px; line-height: 1.6; }
+        /* 筛选区样式 */
+        .filter-bar { background: #fff; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .filter-item { flex: 1; min-width: 150px; }
+        .filter-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: block; }
+        .form-control { border-radius: 8px; border: 1px solid #ddd; padding: 8px 12px; font-size: 13px; }
+        .form-select { border-radius: 8px; border: 1px solid #ddd; padding: 8px 12px; font-size: 13px; }
+        .filter-actions { display: flex; gap: 10px; align-items: flex-end; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+        /* 列表样式 */
+        .service-table th { font-size: 13px; font-weight: 600; color: #666; text-align: center; vertical-align: middle; }
+        .service-table td { font-size: 13px; vertical-align: middle; text-align: center; }
+        .service-table .text-left { text-align: left; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-normal { background-color: #E6F7E6; color: #52C41A; }
+        .status-pause { background-color: #FFF7E6; color: #FAAD14; }
+        .status-transfer { background-color: #E6F7FF; color: #1890FF; }
+        .status-death { background-color: #FFE6E6; color: #FF4D4F; }
+        /* 分页样式 */
+        .pagination-container { display: flex; justify-content: flex-end; margin-top: 20px; }
+        .pagination { margin: 0; }
+        .page-item.active .page-link { background-color: #1890FF; border-color: #1890FF; }
+        .page-link { color: #666; }
+        .page-link:hover { color: #1890FF; }
+        /* 弹窗样式 */
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-body { font-size: 13px; }
+        .modal-footer { padding: 10px 20px; border-top: 1px solid #f0f0f0; }
+        /* 表单样式 */
+        .form-group { margin-bottom: 15px; }
+        .form-label { font-weight: 500; margin-bottom: 8px; display: block; font-size: 13px; }
+        .form-text { color: #666; font-size: 12px; margin-top: 5px; }
+        .required-mark { color: #FF4D4F; margin-left: 2px; }
+        /* 档案文件预览区 */
+        .archive-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+        .archive-file-item { border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .archive-file-item:hover { border-color: #1890FF; box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2); }
+        .archive-file-item img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
+        .archive-file-item .file-name { font-size: 12px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航（管理员专属） -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="https://via.placeholder.com/80x40?text=居家长护" alt="系统Logo">
+                <h3>管理员工作平台</h3>
+            </div>
+            
+            <!-- 导航分组：系统配置 -->
+            <div class="nav-group-title">系统配置</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="fa fa-building-o"></i>
+                        <span>机构信息配置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="套餐管理.html" class="nav-link">
+                        <i class="fa fa-cog"></i>
+                        <span>套餐管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="行政区划.html" class="nav-link">
+                        <i class="fa fa-book"></i>
+                        <span>行政区域管理</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- 导航分组：用户管理 -->
+            <div class="nav-group-title">用户管理</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="角色配置.html" class="nav-link">
+                        <i class="fa fa-user-secret"></i>
+                        <span>角色权限配置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="护理员管理.html" class="nav-link">
+                        <i class="fa fa-user-md"></i>
+                        <span>护理员管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="服务对象管理.html" class="nav-link active">
+                        <i class="fa fa-users"></i>
+                        <span>服务对象管理</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- 导航分组：数据管理 -->
+            <div class="nav-group-title">数据管理</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="服务线索批量导入.html" class="nav-link">
+                        <i class="fa fa-upload"></i>
+                        <span>服务对象数据批量导入</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="服务对象数据维护.html" class="nav-link">
+                        <i class="fa fa-edit"></i>
+                        <span>服务对象数据维护</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保工单导入.html" class="nav-link">
+                        <i class="fa fa-file-excel-o"></i>
+                        <span>医保平台工单导入</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保平台新增服务对象数据.html" class="nav-link">
+                        <i class="fa fa-download"></i>
+                        <span>医保平台新增服务对象数据导出</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保对账数据管理.html" class="nav-link">
+                        <i class="fa fa-calculator"></i>
+                        <span>医保对账数据管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="关键数据配置.html" class="nav-link">
+                        <i class="fa fa-wrench"></i>
+                        <span>业务数据维护</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 顶部导航 -->
+            <div class="top-nav">
+                <h1 class="page-title">服务对象管理</h1>
+                <div class="user-info">
+                    <div class="notification">
+                        <i class="fa fa-bell-o"></i>
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="user-avatar" id="userAvatar" title="点击生成App登录二维码">管</div>
+                    <span class="user-name">系统管理员</span>
+                </div>
+            </div>
+
+            <!-- 服务对象列表筛选区 -->
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label class="filter-label">服务状态</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">全部状态</option>
+                        <option value="normal">正常服务</option>
+                        <option value="pause">暂停服务</option>
+                        <option value="transfer">转出</option>
+                        <option value="death">死亡</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">服务主管</label>
+                    <select class="form-select" id="filterManager">
+                        <option value="">全部服务主管</option>
+                        <!-- 服务主管列表将通过JavaScript动态加载 -->
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">姓名/身份证号</label>
+                    <input type="text" class="form-control" id="filterKeyword" placeholder="请输入姓名或身份证号">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-sm btn-primary" id="searchBtn"><i class="fa fa-search"></i> 查询</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="resetBtn"><i class="fa fa-refresh"></i> 重置</button>
+                </div>
+            </div>
+
+            <!-- 待审批申请列表 -->
+            <div class="card" id="approvalCard" style="display: none;">
+                <div class="card-header">
+                    <span><i class="fa fa-exclamation-circle text-warning"></i> 待审批申请</span>
+                    <span class="badge bg-danger" id="approvalCount">0</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover service-table">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th class="text-left">服务对象</th>
+                                    <th>申请类型</th>
+                                    <th>申请人</th>
+                                    <th>申请日期</th>
+                                    <th>申请原因</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvalTableBody">
+                                <!-- 待审批申请列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 服务对象列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>服务对象列表</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="viewArchiveBtn" style="margin-right: 10px;"><i class="fa fa-folder-open"></i> 档案查询</button>
+                        <button class="btn btn-sm btn-primary" id="addServiceBtn"><i class="fa fa-plus"></i> 新增服务对象</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover service-table">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th class="text-left">姓名</th>
+                                    <th>身份证号</th>
+                                    <th>性别</th>
+                                    <th>年龄</th>
+                                    <th>联系电话</th>
+                                    <th>服务主管</th>
+                                    <th>服务状态</th>
+                                    <th>签约时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serviceTableBody">
+                                <tr>
+                                    <td>1</td>
+                                    <td class="text-left">张三</td>
+                                    <td>110101********1234</td>
+                                    <td>男</td>
+                                    <td>75</td>
+                                    <td>138****5678</td>
+                                    <td>李四</td>
+                                    <td><span class="status-badge status-normal">正常服务</span></td>
+                                    <td>2024-01-15</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary view-service-btn" data-id="1"><i class="fa fa-eye"></i> 查看</button>
+                                        <button class="btn btn-sm btn-outline-secondary edit-service-btn" data-id="1"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="1"><i class="fa fa-folder-open"></i> 档案</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td class="text-left">李四</td>
+                                    <td>220101********5678</td>
+                                    <td>女</td>
+                                    <td>68</td>
+                                    <td>139****9012</td>
+                                    <td>王主管</td>
+                                    <td><span class="status-badge status-pause">暂停服务</span></td>
+                                    <td>2024-02-20</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary view-service-btn" data-id="2"><i class="fa fa-eye"></i> 查看</button>
+                                        <button class="btn btn-sm btn-outline-secondary edit-service-btn" data-id="2"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="2"><i class="fa fa-folder-open"></i> 档案</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td class="text-left">王五</td>
+                                    <td>330101********9012</td>
+                                    <td>男</td>
+                                    <td>82</td>
+                                    <td>137****3456</td>
+                                    <td>张主管</td>
+                                    <td><span class="status-badge status-transfer">转出</span></td>
+                                    <td>2024-03-10</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary view-service-btn" data-id="3"><i class="fa fa-eye"></i> 查看</button>
+                                        <button class="btn btn-sm btn-outline-secondary edit-service-btn" data-id="3"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="3"><i class="fa fa-folder-open"></i> 档案</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td class="text-left">赵六</td>
+                                    <td>440101********3456</td>
+                                    <td>女</td>
+                                    <td>79</td>
+                                    <td>136****7890</td>
+                                    <td>李四</td>
+                                    <td><span class="status-badge status-death">死亡</span></td>
+                                    <td>2024-04-05</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary view-service-btn" data-id="4"><i class="fa fa-eye"></i> 查看</button>
+                                        <button class="btn btn-sm btn-outline-secondary edit-service-btn" data-id="4"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="4"><i class="fa fa-folder-open"></i> 档案</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="pagination-container">
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination">
+                                <li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看服务对象详情弹窗 -->
+    <div class="modal fade" id="viewServiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewServiceModalTitle">服务对象详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="serviceDetailTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-info-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab">基本信息</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="archive-info-tab" data-bs-toggle="tab" data-bs-target="#archive-info" type="button" role="tab">档案信息</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="serviceDetailTabContent">
+                        <div class="tab-pane fade show active" id="basic-info" role="tabpanel">
+                            <div id="viewServiceModalBody">
+                                <!-- 基本信息内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="archive-info" role="tabpanel">
+                            <div id="viewServiceArchiveBody">
+                                <!-- 档案信息内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="editFromViewBtn">编辑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 审批申请弹窗 -->
+    <div class="modal fade" id="approvalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approvalModalTitle">审批申请</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="approvalModalBody">
+                    <!-- 审批内容将通过JavaScript动态生成 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="rejectBtn">驳回</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="approveBtn">通过</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑服务对象弹窗 -->
+    <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="serviceModalTitle">新增服务对象</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="serviceForm" onsubmit="return false;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceName">姓名 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="serviceName" name="name" maxlength="30" placeholder="请输入姓名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceSelfId">身份证号 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="serviceSelfId" name="selfid" maxlength="18" placeholder="请输入18位身份证号">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceGender">性别 <span class="required-mark">*</span></label>
+                                    <select class="form-select" id="serviceGender" name="gender">
+                                        <option value="">请选择性别</option>
+                                        <option value="男">男</option>
+                                        <option value="女">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="servicePhone">联系电话 <span class="required-mark">*</span></label>
+                                    <input type="tel" class="form-control" id="servicePhone" name="phone_num" maxlength="11" placeholder="请输入11位手机号">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceManagerId">服务主管 <span class="required-mark">*</span></label>
+                                    <select class="form-select" id="serviceManagerId" name="manager_id">
+                                        <option value="">请选择服务主管</option>
+                                        <!-- 服务主管列表将通过JavaScript动态加载 -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceAddress">住址</label>
+                                    <input type="text" class="form-control" id="serviceAddress" name="address" maxlength="128" placeholder="请输入住址">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceContacts">紧急联系人</label>
+                                    <input type="text" class="form-control" id="serviceContacts" name="contacts" maxlength="30" placeholder="请输入紧急联系人姓名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="serviceConPhone">紧急联系人电话</label>
+                                    <input type="tel" class="form-control" id="serviceConPhone" name="con_phone_num" maxlength="11" placeholder="请输入11位手机号">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="saveServiceBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二维码模态框 -->
+    <div class="modal fade qrcode-modal" id="qrcodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fa fa-qrcode"></i> App登录二维码
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="qrcode-container">
+                        <canvas id="qrcodeCanvas"></canvas>
+                    </div>
+                    <div class="qrcode-info">
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">服务地址：</span>
+                            <span class="qrcode-info-value" id="qrcodeServer">http://192.168.1.100</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">端口：</span>
+                            <span class="qrcode-info-value" id="qrcodePort">8080</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">账号：</span>
+                            <span class="qrcode-info-value" id="qrcodeUsername">admin</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">密码：</span>
+                            <span class="qrcode-info-value" id="qrcodePassword">••••••••</span>
+                        </div>
+                    </div>
+                    <div class="qrcode-tip">
+                        <i class="fa fa-info-circle"></i> 使用手机App扫描此二维码即可自动配置登录信息
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="downloadQrcodeBtn">
+                        <i class="fa fa-download"></i> 下载二维码
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        // 页面加载完成后初始化
+        $(function() {
+            let currentEditServiceId = null;
+            let currentViewServiceId = null;
+            
+            // 加载服务主管列表
+            function loadServiceSupervisors(selectId) {
+                const supervisors = [
+                    { id: 2, name: '李四', login_name: 'supervisor_lisi' },
+                    { id: 5, name: '王主管', login_name: 'supervisor_wang' },
+                    { id: 6, name: '张主管', login_name: 'supervisor_zhang' }
+                ];
+                
+                const $select = $(selectId || '#serviceManagerId');
+                $select.find('option:not(:first)').remove();
+                
+                supervisors.forEach(supervisor => {
+                    $select.append(`<option value="${supervisor.id}">${supervisor.name} (${supervisor.login_name})</option>`);
+                });
+            }
+            
+            // 初始化：加载服务主管列表
+            loadServiceSupervisors('#filterManager');
+            loadServiceSupervisors('#serviceManagerId');
+            
+            // 新增服务对象按钮点击事件
+            $('#addServiceBtn').click(function() {
+                $('#serviceForm')[0].reset();
+                loadServiceSupervisors('#serviceManagerId');
+                $('#serviceModalTitle').text('新增服务对象');
+                currentEditServiceId = null;
+                $('#serviceModal').modal('show');
+            });
+
+            // 查看服务对象按钮点击事件
+            $(document).on('click', '.view-service-btn', function() {
+                const serviceId = $(this).data('id');
+                currentViewServiceId = serviceId;
+                
+                // 模拟获取服务对象详情（实际项目中从后端获取）
+                const $row = $(this).closest('tr');
+                const name = $row.find('td:eq(1)').text().trim();
+                const selfId = $row.find('td:eq(2)').text().trim();
+                const gender = $row.find('td:eq(3)').text().trim();
+                const age = $row.find('td:eq(4)').text().trim();
+                const phone = $row.find('td:eq(5)').text().trim().replace(/\*/g, '');
+                const manager = $row.find('td:eq(6)').text().trim();
+                const status = $row.find('td:eq(7) .status-badge').text().trim();
+                const signDate = $row.find('td:eq(8)').text().trim();
+                
+                // 基本信息（根据client表结构）
+                const detailHtml = `
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">姓名 <span class="required-mark">*</span></label>
+                                <div class="form-control-plaintext">${name}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">身份证号</label>
+                                <div class="form-control-plaintext">${selfId}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">性别</label>
+                                <div class="form-control-plaintext">${gender}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">出生日期</label>
+                                <div class="form-control-plaintext">${age}岁（数据库自动维护）</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">手机号 <span class="required-mark">*</span></label>
+                                <div class="form-control-plaintext">${phone}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">具体住址 <span class="required-mark">*</span></label>
+                                <div class="form-control-plaintext">XX市XX区XX街道XX路100号</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">居住地小区/自然村</label>
+                                <div class="form-control-plaintext">XX小区</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">服务状态</label>
+                                <div class="form-control-plaintext"><span class="status-badge status-${getStatusClass(status)}">${status}</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">失能等级</label>
+                                <div class="form-control-plaintext">重度二级</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">残疾等级</label>
+                                <div class="form-control-plaintext">肢体残疾二级</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">医保类型</label>
+                                <div class="form-control-plaintext">职工基本医疗保险</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">失能原因</label>
+                                <div class="form-control-plaintext">疾病</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">是否低保户</label>
+                                <div class="form-control-plaintext">否</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">负责护理员</label>
+                                <div class="form-control-plaintext">王五</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">是否接受过服务</label>
+                                <div class="form-control-plaintext">是（数据库自动维护）</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">代理人姓名</label>
+                                <div class="form-control-plaintext">张四</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">代理人手机号</label>
+                                <div class="form-control-plaintext">139****5678</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">代理人身份证号</label>
+                                <div class="form-control-plaintext">110101********5678</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">代理人关系</label>
+                                <div class="form-control-plaintext">子女</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">地理经度</label>
+                                <div class="form-control-plaintext">120.123456</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">地理纬度</label>
+                                <div class="form-control-plaintext">30.123456</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">信标地址</label>
+                                <div class="form-control-plaintext">XX路XX号入口</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">是否本省异地参保</label>
+                                <div class="form-control-plaintext">否</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">外勤上门评估日期</label>
+                                <div class="form-control-plaintext">2024-01-10</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">机构提交材料日期</label>
+                                <div class="form-control-plaintext">2024-01-12</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">申请日期</label>
+                                <div class="form-control-plaintext">2024-01-13</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">评估日期</label>
+                                <div class="form-control-plaintext">2024-01-15</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">公示日期</label>
+                                <div class="form-control-plaintext">2024-01-20</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">签约送达日期</label>
+                                <div class="form-control-plaintext">${signDate}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">首次服务日期</label>
+                                <div class="form-control-plaintext">2024-01-16（数据库自动维护）</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">预期首次服务日期</label>
+                                <div class="form-control-plaintext">2024-01-20</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">提供线索的日期</label>
+                                <div class="form-control-plaintext">2024-01-05</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">档案编号</label>
+                                <div class="form-control-plaintext">DA-2024-001（数据自动维护）</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 档案信息（根据client_file_stru表）
+                const archiveHtml = generateServiceArchiveHtml();
+                
+                $('#viewServiceModalTitle').text(`服务对象详情 - ${name}`);
+                $('#viewServiceModalBody').html(detailHtml);
+                $('#viewServiceArchiveBody').html(archiveHtml);
+                $('#viewServiceModal').modal('show');
+            });
+            
+            // 生成服务对象档案HTML
+            function generateServiceArchiveHtml() {
+                // 根据client_file_stru表，按position分组显示档案
+                const initialFiles = [
+                    { name: '本人身份证', pageNum: 2, optional: false, yangNeed: false },
+                    { name: '代理人身份证', pageNum: 2, optional: true, yangNeed: false },
+                    { name: '失能等级自评表', pageNum: 1, optional: false, yangNeed: false },
+                    { name: '评估申请表', pageNum: 2, optional: false, yangNeed: false },
+                    { name: '病情承诺书', pageNum: 1, optional: false, yangNeed: false },
+                    { name: '病例或证明', pageNum: 0, optional: false, yangNeed: true }
+                ];
+                
+                const publicFiles = [
+                    { name: '服务协议', pageNum: 0, optional: false, yangNeed: false },
+                    { name: '评估结论书', pageNum: 1, optional: false, yangNeed: false },
+                    { name: '中止服务协议', pageNum: 1, optional: false, yangNeed: false },
+                    { name: '转出申请', pageNum: 1, optional: false, yangNeed: false },
+                    { name: '死亡证明', pageNum: 1, optional: false, yangNeed: false }
+                ];
+                
+                const contractFiles = [
+                    { name: '服务计划', pageNum: 0, optional: false, yangNeed: false, saveType: 2 },
+                    { name: '服务记录', pageNum: 0, optional: false, yangNeed: false, saveType: 2 },
+                    { name: '转入申请', pageNum: 1, optional: false, yangNeed: false, saveType: 3 }
+                ];
+                
+                return `
+                    <div class="mb-4 mt-3">
+                        <h6><i class="fa fa-file-text"></i> 初评材料 (position=1)</h6>
+                        <div class="archive-files">
+                            ${initialFiles.map(file => `
+                                <div class="archive-file-item">
+                                    <img src="https://via.placeholder.com/150x120?text=${encodeURIComponent(file.name)}" alt="${file.name}">
+                                    <div class="file-name">${file.name}${file.pageNum > 0 ? ` (${file.pageNum}页)` : ''}${file.optional ? ' [可选]' : ''}${file.yangNeed ? ' [60岁以下]' : ''}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6><i class="fa fa-file-text"></i> 公示后材料 (position=2)</h6>
+                        <div class="archive-files">
+                            ${publicFiles.map(file => `
+                                <div class="archive-file-item">
+                                    <img src="https://via.placeholder.com/150x120?text=${encodeURIComponent(file.name)}" alt="${file.name}">
+                                    <div class="file-name">${file.name}${file.pageNum > 0 ? ` (${file.pageNum}页)` : ''}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6><i class="fa fa-file-text"></i> 签约后材料 (position=3)</h6>
+                        <div class="archive-files">
+                            ${contractFiles.map(file => `
+                                <div class="archive-file-item">
+                                    <img src="https://via.placeholder.com/150x120?text=${encodeURIComponent(file.name)}" alt="${file.name}">
+                                    <div class="file-name">${file.name}${file.saveType === 2 ? ' [每月一份]' : file.saveType === 3 ? ' [记录日期]' : ''}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function getStatusClass(status) {
+                const statusMap = {
+                    '正常服务': 'normal',
+                    '暂停服务': 'pause',
+                    '转出': 'transfer',
+                    '死亡': 'death'
+                };
+                return statusMap[status] || 'normal';
+            }
+
+            // 编辑服务对象按钮点击事件
+            $(document).on('click', '.edit-service-btn', function() {
+                const serviceId = $(this).data('id');
+                currentEditServiceId = serviceId;
+                
+                const $row = $(this).closest('tr');
+                const name = $row.find('td:eq(1)').text().trim();
+                const selfId = $row.find('td:eq(2)').text().trim();
+                const gender = $row.find('td:eq(3)').text().trim();
+                const phone = $row.find('td:eq(5)').text().trim().replace(/\*/g, '');
+                const manager = $row.find('td:eq(6)').text().trim();
+                
+                // 填充表单
+                $('#serviceName').val(name);
+                $('#serviceSelfId').val(selfId);
+                $('#serviceGender').val(gender);
+                $('#servicePhone').val(phone);
+                
+                loadServiceSupervisors('#serviceManagerId');
+                setTimeout(() => {
+                    // 根据服务主管名称设置选中值（实际项目中应使用ID）
+                    $('#serviceManagerId option').each(function() {
+                        if ($(this).text().includes(manager)) {
+                            $(this).prop('selected', true);
+                        }
+                    });
+                }, 100);
+
+                $('#serviceModalTitle').text('编辑服务对象');
+                $('#serviceModal').modal('show');
+            });
+
+            // 从查看详情跳转到编辑
+            $('#editFromViewBtn').click(function() {
+                $('#viewServiceModal').modal('hide');
+                $(`.edit-service-btn[data-id="${currentViewServiceId}"]`).click();
+            });
+
+            // 暂停服务按钮点击事件
+            $(document).on('click', '.pause-service-btn', function() {
+                const serviceId = $(this).data('id');
+                if (confirm('确定要暂停该服务对象的服务吗？')) {
+                    // 模拟API请求
+                    console.log(`暂停服务对象${serviceId}的服务`);
+                    alert('服务已暂停');
+                    // 更新表格状态
+                    const $row = $(this).closest('tr');
+                    $row.find('.status-badge').removeClass('status-normal').addClass('status-pause').text('暂停服务');
+                    $(this).removeClass('btn-warning pause-service-btn').addClass('btn-success resume-service-btn')
+                        .html('<i class="fa fa-play"></i> 恢复').data('id', serviceId);
+                }
+            });
+
+            // 恢复服务按钮点击事件
+            $(document).on('click', '.resume-service-btn', function() {
+                const serviceId = $(this).data('id');
+                if (confirm('确定要恢复该服务对象的服务吗？')) {
+                    // 模拟API请求
+                    console.log(`恢复服务对象${serviceId}的服务`);
+                    alert('服务已恢复');
+                    // 更新表格状态
+                    const $row = $(this).closest('tr');
+                    $row.find('.status-badge').removeClass('status-pause').addClass('status-normal').text('正常服务');
+                    $(this).removeClass('btn-success resume-service-btn').addClass('btn-warning pause-service-btn')
+                        .html('<i class="fa fa-pause"></i> 暂停').data('id', serviceId);
+                }
+            });
+
+            // 保存服务对象按钮点击事件
+            $('#saveServiceBtn').click(function(e) {
+                e.preventDefault();
+                
+                const serviceName = $('#serviceName').val().trim();
+                const serviceSelfId = $('#serviceSelfId').val().trim();
+                const serviceGender = $('#serviceGender').val();
+                const servicePhone = $('#servicePhone').val().trim();
+                const serviceManagerId = $('#serviceManagerId').val();
+
+                if (!serviceName) {
+                    alert('请输入姓名');
+                    return;
+                }
+                if (!serviceSelfId) {
+                    alert('请输入身份证号');
+                    return;
+                }
+                if (serviceSelfId.length !== 18) {
+                    alert('身份证号必须为18位');
+                    return;
+                }
+                if (!serviceGender) {
+                    alert('请选择性别');
+                    return;
+                }
+                if (!servicePhone) {
+                    alert('请输入联系电话');
+                    return;
+                }
+                if (!serviceManagerId) {
+                    alert('请选择服务主管');
+                    return;
+                }
+
+                const isAddMode = $('#serviceModalTitle').text() === '新增服务对象';
+                const saveData = {
+                    name: serviceName,
+                    selfid: serviceSelfId,
+                    gender: serviceGender,
+                    phone_num: servicePhone,
+                    manager_id: serviceManagerId,
+                    address: $('#serviceAddress').val().trim() || null,
+                    contacts: $('#serviceContacts').val().trim() || null,
+                    con_phone_num: $('#serviceConPhone').val().trim() || null
+                };
+                
+                if (!isAddMode && currentEditServiceId) {
+                    saveData.id = currentEditServiceId;
+                }
+
+                // 模拟保存请求
+                try {
+                    console.log('保存服务对象信息:', saveData);
+                    alert(isAddMode ? '服务对象添加成功！' : '服务对象信息保存成功！');
+                    $('#serviceModal').modal('hide');
+                    location.reload();
+                } catch (error) {
+                    alert('保存失败：' + error.message);
+                }
+            });
+
+            // 查询按钮点击事件
+            $('#searchBtn').click(function() {
+                console.log('查询服务对象列表');
+                alert('查询功能待实现');
+            });
+
+            // 重置按钮点击事件
+            $('#resetBtn').click(function() {
+                $('#filterStatus').val('');
+                $('#filterManager').val('');
+                $('#filterKeyword').val('');
+            });
+
+            // 查看档案按钮点击事件（在详情弹窗中显示）
+            $(document).on('click', '.view-archive-btn', function() {
+                const serviceId = $(this).data('id');
+                // 触发查看详情，然后切换到档案标签页
+                $(`.view-service-btn[data-id="${serviceId}"]`).click();
+                setTimeout(() => {
+                    $('#archive-info-tab').click();
+                }, 300);
+            });
+
+            // 档案查询按钮点击事件（显示所有服务对象的档案列表）
+            $('#viewArchiveBtn').click(function() {
+                // 可以打开一个档案列表弹窗，或者跳转到档案管理页面
+                alert('档案查询功能：可以在此处显示所有服务对象的档案列表');
+            });
+
+            // 加载待审批申请列表
+            function loadPendingApprovals() {
+                // 模拟从后端获取待审批申请列表（实际项目中需要发送AJAX请求）
+                const pendingApprovals = [
+                    {
+                        id: 1,
+                        serviceObjectName: '张三',
+                        requestType: '暂停',
+                        requestTypeId: 1,
+                        applicant: '王护理',
+                        requestDate: '2024-12-10',
+                        reason: '服务对象因突发疾病住院治疗，无法继续接受居家护理服务'
+                    },
+                    {
+                        id: 2,
+                        serviceObjectName: '李四',
+                        requestType: '死亡',
+                        requestTypeId: 5,
+                        applicant: '赵护理',
+                        requestDate: '2024-12-09',
+                        reason: '服务对象于2024年12月9日去世'
+                    },
+                    {
+                        id: 3,
+                        serviceObjectName: '王五',
+                        requestType: '转出',
+                        requestTypeId: 3,
+                        applicant: '张护理',
+                        requestDate: '2024-12-08',
+                        reason: '服务对象因搬迁需要转出到其他机构'
+                    }
+                ];
+
+                if (pendingApprovals.length > 0) {
+                    $('#approvalCard').show();
+                    $('#approvalCount').text(pendingApprovals.length);
+                    
+                    const $tbody = $('#approvalTableBody');
+                    $tbody.empty();
+                    
+                    pendingApprovals.forEach((approval, index) => {
+                        const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td class="text-left">${approval.serviceObjectName}</td>
+                                <td><span class="status-badge status-pending">${approval.requestType}</span></td>
+                                <td>${approval.applicant}</td>
+                                <td>${approval.requestDate}</td>
+                                <td class="text-left">${approval.reason}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-secondary approve-detail-btn" data-id="${approval.id}" data-type="${approval.requestTypeId}">
+                                        <i class="fa fa-eye"></i> 审批
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        $tbody.append(row);
+                    });
+                } else {
+                    $('#approvalCard').hide();
+                }
+            }
+
+            // 审批详情按钮点击事件
+            $(document).on('click', '.approve-detail-btn', function() {
+                const approvalId = $(this).data('id');
+                const requestTypeId = $(this).data('type');
+                
+                // 根据申请类型ID获取类型名称（根据ser_req_type表）
+                const requestTypeMap = {
+                    1: '暂停',
+                    2: '恢复',
+                    3: '转出',
+                    4: '转入',
+                    5: '死亡',
+                    6: '永久放弃'
+                };
+                const requestTypeName = requestTypeMap[requestTypeId] || '未知';
+                
+                // 模拟获取审批详情（实际项目中从后端获取）
+                const approvalDetail = {
+                    id: approvalId,
+                    serviceObjectName: '张三',
+                    requestType: requestTypeName,
+                    requestTypeId: requestTypeId,
+                    applicant: '王护理',
+                    requestDate: '2024-12-10',
+                    reason: '服务对象因突发疾病住院治疗，无法继续接受居家护理服务，申请暂时中止服务。预计住院时间为1个月，待康复出院后再申请恢复服务。',
+                    remark: '已与家属电话确认，情况属实。家属表示会在患者出院后及时联系我们。'
+                };
+
+                // 根据申请类型生成不同的审批表单
+                let approvalFormHtml = '';
+                if (requestTypeId == 1) { // 暂停
+                    approvalFormHtml = `
+                        <div class="form-group">
+                            <label class="form-label">服务对象</label>
+                            <div class="form-control-plaintext">${approvalDetail.serviceObjectName}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请类型</label>
+                            <div class="form-control-plaintext"><span class="status-badge status-pending">${approvalDetail.requestType}</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请人</label>
+                            <div class="form-control-plaintext">${approvalDetail.applicant}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请日期</label>
+                            <div class="form-control-plaintext">${approvalDetail.requestDate}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">暂停原因</label>
+                            <textarea class="form-control" rows="3" readonly>${approvalDetail.reason}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">护理员备注</label>
+                            <textarea class="form-control" rows="2" readonly>${approvalDetail.remark}</textarea>
+                        </div>
+                        <div class="form-group" id="rejectReasonGroup" style="display: none;">
+                            <label class="form-label">驳回原因 <span class="required-mark">*</span></label>
+                            <textarea class="form-control" id="rejectReason" rows="2" placeholder="请输入驳回原因"></textarea>
+                        </div>
+                    `;
+                } else if (requestTypeId == 5) { // 死亡
+                    approvalFormHtml = `
+                        <div class="form-group">
+                            <label class="form-label">服务对象</label>
+                            <div class="form-control-plaintext">${approvalDetail.serviceObjectName}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请类型</label>
+                            <div class="form-control-plaintext"><span class="status-badge status-death">${approvalDetail.requestType}</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请人</label>
+                            <div class="form-control-plaintext">${approvalDetail.applicant}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请日期</label>
+                            <div class="form-control-plaintext">${approvalDetail.requestDate}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">死亡原因</label>
+                            <textarea class="form-control" rows="3" readonly>${approvalDetail.reason}</textarea>
+                        </div>
+                        <div class="form-group" id="rejectReasonGroup" style="display: none;">
+                            <label class="form-label">驳回原因 <span class="required-mark">*</span></label>
+                            <textarea class="form-control" id="rejectReason" rows="2" placeholder="请输入驳回原因"></textarea>
+                        </div>
+                    `;
+                } else { // 转出、转入等
+                    approvalFormHtml = `
+                        <div class="form-group">
+                            <label class="form-label">服务对象</label>
+                            <div class="form-control-plaintext">${approvalDetail.serviceObjectName}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请类型</label>
+                            <div class="form-control-plaintext"><span class="status-badge status-transfer">${approvalDetail.requestType}</span></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请人</label>
+                            <div class="form-control-plaintext">${approvalDetail.applicant}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请日期</label>
+                            <div class="form-control-plaintext">${approvalDetail.requestDate}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">申请原因</label>
+                            <textarea class="form-control" rows="3" readonly>${approvalDetail.reason}</textarea>
+                        </div>
+                        <div class="form-group" id="rejectReasonGroup" style="display: none;">
+                            <label class="form-label">驳回原因 <span class="required-mark">*</span></label>
+                            <textarea class="form-control" id="rejectReason" rows="2" placeholder="请输入驳回原因"></textarea>
+                        </div>
+                    `;
+                }
+
+                $('#approvalModalTitle').text(`审批${approvalDetail.requestType}申请 - ${approvalDetail.serviceObjectName}`);
+                $('#approvalModalBody').html(approvalFormHtml);
+                $('#approvalModal').data('approval-id', approvalId);
+                $('#approvalModal').data('request-type-id', requestTypeId);
+                $('#approvalModal').modal('show');
+            });
+
+            // 驳回按钮点击事件
+            $('#rejectBtn').click(function() {
+                $('#rejectReasonGroup').show();
+                $('#rejectReason').focus();
+            });
+
+            // 通过按钮点击事件
+            $('#approveBtn').click(function() {
+                const approvalId = $('#approvalModal').data('approval-id');
+                const requestTypeId = $('#approvalModal').data('request-type-id');
+                
+                if (confirm('确定要通过该申请吗？')) {
+                    // 模拟API请求
+                    console.log(`通过申请${approvalId}，类型：${requestTypeId}`);
+                    alert('申请已通过');
+                    $('#approvalModal').modal('hide');
+                    // 重新加载待审批列表
+                    loadPendingApprovals();
+                }
+            });
+
+            // 初始化：加载待审批申请列表
+            loadPendingApprovals();
+            
+            // ========== 二维码功能 ==========
+            // 二维码配置信息（实际项目中应该从后端获取）
+            const qrcodeConfig = {
+                server: 'http://192.168.1.100',
+                port: '8080',
+                username: 'admin',
+                password: 'admin123456'
+            };
+            
+            // 头像点击事件
+            $('#userAvatar').click(function() {
+                // 更新显示信息
+                $('#qrcodeServer').text(qrcodeConfig.server);
+                $('#qrcodePort').text(qrcodeConfig.port);
+                $('#qrcodeUsername').text(qrcodeConfig.username);
+                $('#qrcodePassword').text('•'.repeat(qrcodeConfig.password.length));
+                
+                const qrcodeModal = new bootstrap.Modal('#qrcodeModal');
+                
+                // 等待模态框完全显示后再生成二维码（使用one确保只触发一次）
+                $('#qrcodeModal').one('shown.bs.modal', function () {
+                    generateQRCode();
+                });
+                
+                qrcodeModal.show();
+            });
+            
+            // 生成二维码
+            function generateQRCode() {
+                // 构建二维码数据（JSON格式）
+                const qrcodeData = {
+                    type: 'app_login',
+                    server: qrcodeConfig.server,
+                    port: qrcodeConfig.port,
+                    username: qrcodeConfig.username,
+                    password: qrcodeConfig.password,
+                    timestamp: new Date().getTime()
+                };
+                
+                const qrcodeString = JSON.stringify(qrcodeData);
+                
+                // 获取canvas元素
+                const canvas = document.getElementById('qrcodeCanvas');
+                
+                // 生成二维码
+                QRCode.toCanvas(canvas, qrcodeString, {
+                    width: 300,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        console.error('二维码生成失败:', error);
+                        alert('二维码生成失败，请重试');
+                    }
+                });
+            }
+            
+            // 下载二维码
+            $('#downloadQrcodeBtn').click(function() {
+                const canvas = document.getElementById('qrcodeCanvas');
+                const url = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'app_login_qrcode_' + new Date().getTime() + '.png';
+                link.href = url;
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>
+

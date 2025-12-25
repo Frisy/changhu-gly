@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>护理员管理 - 居家长护业务管理系统</title>
+    <!-- 引入外部资源 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        /* 继承全局样式 */
+        body { font-family: "微软雅黑", "思源黑体", sans-serif; background-color: #f5f7fa; color: #333; }
+        .btn-primary { background-color: #1890FF; border-color: #1890FF; }
+        .btn-primary:hover { background-color: #096DD9; border-color: #096DD9; }
+        .btn-outline-secondary { border-color: #ddd; color: #666; }
+        .btn-outline-secondary:hover { background-color: #f5f5f5; border-color: #ccc; }
+        .btn-danger { background-color: #FF4D4F; border-color: #FF4D4F; }
+        .btn-danger:hover { background-color: #F5222D; border-color: #F5222D; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; padding: 15px 20px; font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 20px; }
+        /* 布局样式 */
+        .app-container { display: flex; min-height: 100vh; }
+        /* 侧边导航 */
+        .sidebar { width: 220px; background: #fff; box-shadow: 1px 0 2px rgba(0,0,0,0.05); padding: 20px 0; flex-shrink: 0; }
+        .sidebar-logo { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+        .sidebar-logo img { height: 40px; margin-bottom: 8px; }
+        .sidebar-logo h3 { font-size: 16px; color: #1890FF; font-weight: 600; margin: 0; }
+        .nav-menu { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 4px; }
+        .nav-link { display: flex; align-items: center; padding: 12px 20px; color: #666; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+        .nav-link:hover, .nav-link.active { color: #1890FF; background-color: #f0f7ff; border-left: 3px solid #1890FF; }
+        .nav-link i { font-size: 18px; margin-right: 12px; width: 20px; text-align: center; }
+        .nav-group-title { padding: 15px 20px 5px; font-size: 12px; color: #999; font-weight: 500; }
+        /* 主内容区 */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        /* 顶部导航 */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .page-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+        .user-info { display: flex; align-items: center; }
+        .notification { position: relative; margin-right: 20px; cursor: pointer; }
+        .notification i { font-size: 20px; color: #666; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #FF4D4F; color: #fff; border-radius: 50%; font-size: 12px; text-align: center; line-height: 18px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #1890FF; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; margin-right: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .user-avatar:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3); }
+        .user-name { font-size: 14px; font-weight: 500; }
+        /* 二维码模态框样式 */
+        .qrcode-modal .modal-body { text-align: center; padding: 30px; }
+        .qrcode-container { display: inline-block; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .qrcode-container canvas { display: block; margin: 0 auto; }
+        .qrcode-info { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .qrcode-info-item { margin-bottom: 10px; font-size: 14px; }
+        .qrcode-info-item:last-child { margin-bottom: 0; }
+        .qrcode-info-label { color: #666; font-weight: 500; display: inline-block; width: 100px; }
+        .qrcode-info-value { color: #333; }
+        .qrcode-tip { color: #666; font-size: 13px; margin-top: 15px; line-height: 1.6; }
+        /* 筛选区样式 */
+        .filter-bar { background: #fff; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .filter-item { flex: 1; min-width: 150px; }
+        .filter-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: block; }
+        .form-control { border-radius: 8px; border: 1px solid #ddd; padding: 8px 12px; font-size: 13px; }
+        .form-select { border-radius: 8px; border: 1px solid #ddd; padding: 8px 12px; font-size: 13px; }
+        .filter-actions { display: flex; gap: 10px; align-items: flex-end; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+        /* 列表样式 */
+        .nurse-table th { font-size: 13px; font-weight: 600; color: #666; text-align: center; vertical-align: middle; }
+        .nurse-table td { font-size: 13px; vertical-align: middle; text-align: center; }
+        .nurse-table .text-left { text-align: left; }
+        .status-active { color: #52C41A; }
+        .status-locked { color: #FF4D4F; }
+        .manager-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; background-color: #f0f7ff; color: #1890FF; }
+        /* 分页样式 */
+        .pagination-container { display: flex; justify-content: flex-end; margin-top: 20px; }
+        .pagination { margin: 0; }
+        .page-item.active .page-link { background-color: #1890FF; border-color: #1890FF; }
+        .page-link { color: #666; }
+        .page-link:hover { color: #1890FF; }
+        /* 弹窗样式 */
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-body { font-size: 13px; }
+        .modal-footer { padding: 10px 20px; border-top: 1px solid #f0f0f0; }
+        /* 表单样式 */
+        .form-group { margin-bottom: 15px; }
+        .form-label { font-weight: 500; margin-bottom: 8px; display: block; font-size: 13px; }
+        .form-text { color: #666; font-size: 12px; margin-top: 5px; }
+        .required-mark { color: #FF4D4F; margin-left: 2px; }
+        /* 档案文件预览区 */
+        .archive-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+        .archive-file-item { border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .archive-file-item:hover { border-color: #1890FF; box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2); }
+        .archive-file-item img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
+        .archive-file-item .file-name { font-size: 12px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航（管理员专属） -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="https://via.placeholder.com/80x40?text=居家长护" alt="系统Logo">
+                <h3>管理员工作平台</h3>
+            </div>
+            
+            <!-- 导航分组：系统配置 -->
+            <div class="nav-group-title">系统配置</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="fa fa-building-o"></i>
+                        <span>机构信息配置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="套餐管理.html" class="nav-link">
+                        <i class="fa fa-cog"></i>
+                        <span>套餐管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="行政区划.html" class="nav-link">
+                        <i class="fa fa-book"></i>
+                        <span>行政区域管理</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- 导航分组：用户管理 -->
+            <div class="nav-group-title">用户管理</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="角色配置.html" class="nav-link">
+                        <i class="fa fa-user-secret"></i>
+                        <span>角色权限配置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="护理员管理.html" class="nav-link active">
+                        <i class="fa fa-user-md"></i>
+                        <span>护理员管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="服务对象管理.html" class="nav-link">
+                        <i class="fa fa-users"></i>
+                        <span>服务对象管理</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- 导航分组：数据管理 -->
+            <div class="nav-group-title">数据管理</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="服务线索批量导入.html" class="nav-link">
+                        <i class="fa fa-upload"></i>
+                        <span>服务对象数据批量导入</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="服务对象数据维护.html" class="nav-link">
+                        <i class="fa fa-edit"></i>
+                        <span>服务对象数据维护</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保工单导入.html" class="nav-link">
+                        <i class="fa fa-file-excel-o"></i>
+                        <span>医保平台工单导入</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保平台新增服务对象数据.html" class="nav-link">
+                        <i class="fa fa-download"></i>
+                        <span>医保平台新增服务对象数据导出</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="医保对账数据管理.html" class="nav-link">
+                        <i class="fa fa-calculator"></i>
+                        <span>医保对账数据管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="关键数据配置.html" class="nav-link">
+                        <i class="fa fa-wrench"></i>
+                        <span>业务数据维护</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 顶部导航 -->
+            <div class="top-nav">
+                <h1 class="page-title">护理员管理</h1>
+                <div class="user-info">
+                    <div class="notification">
+                        <i class="fa fa-bell-o"></i>
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="user-avatar" id="userAvatar" title="点击生成App登录二维码">管</div>
+                    <span class="user-name">系统管理员</span>
+                </div>
+            </div>
+
+            <!-- 护理员列表筛选区 -->
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label class="filter-label">服务主管</label>
+                    <select class="form-select" id="filterManager">
+                        <option value="">全部服务主管</option>
+                        <!-- 服务主管列表将通过JavaScript动态加载 -->
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">状态</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">全部状态</option>
+                        <option value="active">正常</option>
+                        <option value="locked">锁定</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">姓名/账号</label>
+                    <input type="text" class="form-control" id="filterKeyword" placeholder="请输入姓名或账号">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-sm btn-primary" id="searchBtn"><i class="fa fa-search"></i> 查询</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="resetBtn"><i class="fa fa-refresh"></i> 重置</button>
+                </div>
+            </div>
+
+            <!-- 护理员列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>护理员列表</span>
+                    <button class="btn btn-sm btn-primary" id="addNurseBtn"><i class="fa fa-plus"></i> 新增护理员</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover nurse-table">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th class="text-left">姓名</th>
+                                    <th>账号</th>
+                                    <th>简称</th>
+                                    <th>性别</th>
+                                    <th>联系电话</th>
+                                    <th>服务主管</th>
+                                    <th>分组</th>
+                                    <th>档案编号</th>
+                                    <th>创建时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nurseTableBody">
+                                <tr>
+                                    <td>1</td>
+                                    <td class="text-left">王五</td>
+                                    <td>nurse_wangwu</td>
+                                    <td>王</td>
+                                    <td>男</td>
+                                    <td>137****9012</td>
+                                    <td><span class="manager-badge">李四</span></td>
+                                    <td>1组</td>
+                                    <td>HLY-2024-001</td>
+                                    <td>2024-03-10 11:20:35</td>
+                                    <td><span class="status-active"><i class="fa fa-check-circle"></i> 正常</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary edit-nurse-btn" data-id="1"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary assign-manager-btn" data-id="1"><i class="fa fa-user"></i> 指定主管</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="1"><i class="fa fa-folder-open"></i> 档案</button>
+                                        <button class="btn btn-sm btn-danger lock-nurse-btn" data-id="1" data-status="active"><i class="fa fa-lock"></i> 锁定</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td class="text-left">赵七</td>
+                                    <td>nurse_zhaoqi</td>
+                                    <td>赵</td>
+                                    <td>女</td>
+                                    <td>138****1234</td>
+                                    <td><span class="manager-badge">李四</span></td>
+                                    <td>2组</td>
+                                    <td>HLY-2024-002</td>
+                                    <td>2024-03-15 09:15:20</td>
+                                    <td><span class="status-active"><i class="fa fa-check-circle"></i> 正常</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary edit-nurse-btn" data-id="2"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary assign-manager-btn" data-id="2"><i class="fa fa-user"></i> 指定主管</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="2"><i class="fa fa-folder-open"></i> 档案</button>
+                                        <button class="btn btn-sm btn-danger lock-nurse-btn" data-id="2" data-status="active"><i class="fa fa-lock"></i> 锁定</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td class="text-left">孙八</td>
+                                    <td>nurse_sunba</td>
+                                    <td>孙</td>
+                                    <td>男</td>
+                                    <td>139****5678</td>
+                                    <td><span class="manager-badge">张主管</span></td>
+                                    <td>1组</td>
+                                    <td>HLY-2024-003</td>
+                                    <td>2024-03-20 14:30:10</td>
+                                    <td><span class="status-locked"><i class="fa fa-lock"></i> 锁定</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary edit-nurse-btn" data-id="3"><i class="fa fa-pencil"></i> 编辑</button>
+                                        <button class="btn btn-sm btn-outline-secondary assign-manager-btn" data-id="3"><i class="fa fa-user"></i> 指定主管</button>
+                                        <button class="btn btn-sm btn-outline-secondary view-archive-btn" data-id="3"><i class="fa fa-folder-open"></i> 档案</button>
+                                        <button class="btn btn-sm btn-outline-secondary unlock-nurse-btn" data-id="3" data-status="locked"><i class="fa fa-unlock"></i> 解锁</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="pagination-container">
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination">
+                                <li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑护理员弹窗 -->
+    <div class="modal fade" id="nurseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nurseModalTitle">新增护理员</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nurseForm" onsubmit="return false;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseName">护理员姓名 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="nurseName" name="name" maxlength="30" placeholder="请输入护理员姓名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseAccount">登录账号 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="nurseAccount" name="login_name" maxlength="20" placeholder="请设置登录账号">
+                                    <div class="form-text">账号长度为6-20位，支持字母、数字和下划线</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nursePassword">登录密码 <span class="required-mark" id="nursePasswordRequired">*</span></label>
+                                    <input type="password" class="form-control" id="nursePassword" name="login_pass" placeholder="请设置登录密码">
+                                    <div class="form-text">密码将使用MD5加密存储，编辑时留空则不修改密码</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseGender">性别 <span class="required-mark">*</span></label>
+                                    <select class="form-select" id="nurseGender" name="gender">
+                                        <option value="">请选择性别</option>
+                                        <option value="男">男</option>
+                                        <option value="女">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseSelfId">身份证号 <span class="required-mark">*</span></label>
+                                    <input type="text" class="form-control" id="nurseSelfId" name="selfid" maxlength="18" placeholder="请输入18位身份证号">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseBirthday">出生日期</label>
+                                    <input type="date" class="form-control" id="nurseBirthday" name="birthday" placeholder="出生日期">
+                                    <div class="form-text">数据库将根据身份证号自动维护</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nursePhone">手机号 <span class="required-mark">*</span></label>
+                                    <input type="tel" class="form-control" id="nursePhone" name="phone_num" maxlength="11" placeholder="请输入11位手机号">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseAddress">住址</label>
+                                    <input type="text" class="form-control" id="nurseAddress" name="address" maxlength="128" placeholder="请输入住址">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseContacts">紧急联系人姓名</label>
+                                    <input type="text" class="form-control" id="nurseContacts" name="contacts" maxlength="30" placeholder="请输入紧急联系人姓名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseConPhone">紧急联系人手机号</label>
+                                    <input type="tel" class="form-control" id="nurseConPhone" name="con_phone_num" maxlength="11" placeholder="请输入11位手机号">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseEduLevel">教育程度</label>
+                                    <select class="form-select" id="nurseEduLevel" name="edu_level">
+                                        <option value="">请选择教育程度</option>
+                                        <option value="1">小学</option>
+                                        <option value="2">初中</option>
+                                        <option value="3">高中/中专</option>
+                                        <option value="4">大专</option>
+                                        <option value="5">本科</option>
+                                        <option value="6">硕士及以上</option>
+                                    </select>
+                                    <div class="form-text">参考1.10教育程度配置</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseManagerId">服务主管 <span class="required-mark">*</span></label>
+                                    <select class="form-select" id="nurseManagerId" name="manager_id">
+                                        <option value="">请选择服务主管</option>
+                                        <!-- 服务主管列表将通过JavaScript动态加载 -->
+                                    </select>
+                                    <div class="form-text">护理员必须指定一个服务主管</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseAbbName">护理员简称</label>
+                                    <input type="text" class="form-control" id="nurseAbbName" name="abb_name" maxlength="1" placeholder="请输入简称（1个字符）" readonly>
+                                    <div class="form-text">服务主管维护，用于快速识别（只读）</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseGroupId">所属分组</label>
+                                    <input type="number" class="form-control" id="nurseGroupId" name="group_id" placeholder="请输入分组ID" readonly>
+                                    <div class="form-text">只读字段</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="nurseGroupIdx">组内显示序号</label>
+                                    <input type="number" class="form-control" id="nurseGroupIdx" name="group_idx" placeholder="请输入组内序号" readonly>
+                                    <div class="form-text">只读字段</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="saveNurseBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看护理员详情弹窗 -->
+    <div class="modal fade" id="viewNurseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewNurseModalTitle">护理员详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="nurseDetailTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="nurse-basic-info-tab" data-bs-toggle="tab" data-bs-target="#nurse-basic-info" type="button" role="tab">基本信息</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="nurse-archive-info-tab" data-bs-toggle="tab" data-bs-target="#nurse-archive-info" type="button" role="tab">档案信息</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="nurseDetailTabContent">
+                        <div class="tab-pane fade show active" id="nurse-basic-info" role="tabpanel">
+                            <div id="viewNurseModalBody">
+                                <!-- 基本信息内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="nurse-archive-info" role="tabpanel">
+                            <div id="viewNurseArchiveBody">
+                                <!-- 档案信息内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="editNurseFromViewBtn">编辑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 指定服务主管弹窗 -->
+    <div class="modal fade" id="assignManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">指定服务主管</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assignManagerForm" onsubmit="return false;">
+                        <div class="form-group">
+                            <label class="form-label" for="assignManagerId">选择服务主管 <span class="required-mark">*</span></label>
+                            <select class="form-select" id="assignManagerId">
+                                <option value="">请选择服务主管</option>
+                                <!-- 服务主管列表将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                        <div class="form-text">为护理员指定服务主管后，该护理员将由所选服务主管进行管理和任务分配</div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="confirmAssignBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二维码模态框 -->
+    <div class="modal fade qrcode-modal" id="qrcodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fa fa-qrcode"></i> App登录二维码
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="qrcode-container">
+                        <canvas id="qrcodeCanvas"></canvas>
+                    </div>
+                    <div class="qrcode-info">
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">服务地址：</span>
+                            <span class="qrcode-info-value" id="qrcodeServer">http://192.168.1.100</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">端口：</span>
+                            <span class="qrcode-info-value" id="qrcodePort">8080</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">账号：</span>
+                            <span class="qrcode-info-value" id="qrcodeUsername">admin</span>
+                        </div>
+                        <div class="qrcode-info-item">
+                            <span class="qrcode-info-label">密码：</span>
+                            <span class="qrcode-info-value" id="qrcodePassword">••••••••</span>
+                        </div>
+                    </div>
+                    <div class="qrcode-tip">
+                        <i class="fa fa-info-circle"></i> 使用手机App扫描此二维码即可自动配置登录信息
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="downloadQrcodeBtn">
+                        <i class="fa fa-download"></i> 下载二维码
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        // 页面加载完成后初始化
+        $(function() {
+            // 存储当前编辑的护理员ID
+            let currentEditNurseId = null;
+            let currentAssignNurseId = null;
+            
+            // 加载服务主管列表
+            function loadServiceSupervisors(selectId) {
+                // 模拟从后端获取服务主管列表（实际项目中需要发送AJAX请求）
+                const supervisors = [
+                    { id: 2, name: '李四', login_name: 'supervisor_lisi' },
+                    { id: 5, name: '张主管', login_name: 'supervisor_zhang' },
+                    { id: 6, name: '王主管', login_name: 'supervisor_wang' }
+                ];
+                
+                const $select = $(selectId || '#nurseManagerId');
+                // 保留第一个选项（请选择服务主管）
+                $select.find('option:not(:first)').remove();
+                
+                supervisors.forEach(supervisor => {
+                    $select.append(`<option value="${supervisor.id}">${supervisor.name} (${supervisor.login_name})</option>`);
+                });
+                
+                // 实际项目中的AJAX请求代码（保留作为参考）
+                /*
+                $.ajax({
+                    url: '/api/admin/service-supervisors',
+                    type: 'GET',
+                    success: function(res) {
+                        if (res.code === 200) {
+                            const $select = $(selectId || '#nurseManagerId');
+                            $select.find('option:not(:first)').remove();
+                            res.data.forEach(supervisor => {
+                                $select.append(`<option value="${supervisor.id}">${supervisor.name} (${supervisor.login_name})</option>`);
+                            });
+                        }
+                    },
+                    error: function() {
+                        alert('加载服务主管列表失败，请检查网络连接');
+                    }
+                });
+                */
+            }
+            
+            // 初始化：加载服务主管列表到筛选器和表单
+            loadServiceSupervisors('#filterManager');
+            loadServiceSupervisors('#nurseManagerId');
+            loadServiceSupervisors('#assignManagerId');
+            
+            // 新增护理员按钮点击事件
+            $('#addNurseBtn').click(function() {
+                // 重置表单
+                $('#nurseForm')[0].reset();
+                // 重置账号为可编辑状态
+                $('#nurseAccount').prop('readonly', false);
+                // 显示密码必填标记
+                $('#nursePasswordRequired').show();
+                // 加载服务主管列表
+                loadServiceSupervisors('#nurseManagerId');
+                // 更新弹窗标题
+                $('#nurseModalTitle').text('新增护理员');
+                // 清空当前编辑的护理员ID
+                currentEditNurseId = null;
+                // 显示弹窗
+                $('#nurseModal').modal('show');
+            });
+
+            // 编辑护理员按钮点击事件
+            $(document).on('click', '.edit-nurse-btn', function() {
+                const nurseId = $(this).data('id');
+                currentEditNurseId = nurseId;
+                
+                // 从表格行中获取护理员数据
+                const $row = $(this).closest('tr');
+                const name = $row.find('td:eq(1)').text().trim();
+                const account = $row.find('td:eq(2)').text().trim();
+                const abbName = $row.find('td:eq(3)').text().trim();
+                const gender = $row.find('td:eq(4)').text().trim();
+                const phone = $row.find('td:eq(5)').text().trim().replace(/\*/g, '');
+                const managerName = $row.find('td:eq(6) .manager-badge').text().trim();
+                
+                // 模拟获取护理员完整数据（实际项目中从后端获取）
+                let nurseData = {};
+                if (nurseId == 1) {
+                    nurseData = {
+                        id: 1,
+                        name: '王五',
+                        login_name: 'nurse_wangwu',
+                        gender: '男',
+                        selfid: '330101199001011234',
+                        birthday: '1990-01-01',
+                        phone_num: '13712349012',
+                        address: 'XX市XX区XX街道XX路123号',
+                        contacts: '王六',
+                        con_phone_num: '13812345678',
+                        edu_level: 3,
+                        manager_id: 2,
+                        abb_name: '王',
+                        group_id: 1,
+                        group_idx: 1
+                    };
+                } else if (nurseId == 2) {
+                    nurseData = {
+                        id: 2,
+                        name: '赵七',
+                        login_name: 'nurse_zhaoqi',
+                        gender: '女',
+                        selfid: '440101199002021234',
+                        birthday: '1990-02-02',
+                        phone_num: '13812345678',
+                        address: 'XX市XX区XX街道XX路200号',
+                        contacts: '赵八',
+                        con_phone_num: '13912345678',
+                        edu_level: 4,
+                        manager_id: 2,
+                        abb_name: '赵',
+                        group_id: 2,
+                        group_idx: 1
+                    };
+                } else {
+                    nurseData = {
+                        id: nurseId,
+                        name: name,
+                        login_name: account,
+                        gender: gender,
+                        phone_num: phone || '',
+                        manager_id: 2
+                    };
+                }
+
+                // 填充表单
+                $('#nurseName').val(nurseData.name);
+                $('#nurseAccount').val(nurseData.login_name);
+                $('#nurseAccount').prop('readonly', true);
+                $('#nursePassword').val('');
+                $('#nursePasswordRequired').hide();
+                $('#nurseGender').val(nurseData.gender);
+                $('#nurseSelfId').val(nurseData.selfid || '');
+                $('#nurseBirthday').val(nurseData.birthday || '');
+                $('#nursePhone').val(nurseData.phone_num);
+                $('#nurseAddress').val(nurseData.address || '');
+                $('#nurseContacts').val(nurseData.contacts || '');
+                $('#nurseConPhone').val(nurseData.con_phone_num || '');
+                $('#nurseEduLevel').val(nurseData.edu_level || '');
+                $('#nurseAbbName').val(nurseData.abb_name || '');
+                $('#nurseGroupId').val(nurseData.group_id || '');
+                $('#nurseGroupIdx').val(nurseData.group_idx || '');
+                
+                // 加载服务主管列表并设置选中值
+                loadServiceSupervisors('#nurseManagerId');
+                setTimeout(() => {
+                    $('#nurseManagerId').val(nurseData.manager_id || '');
+                }, 100);
+
+                // 更新弹窗标题
+                $('#nurseModalTitle').text('编辑护理员');
+                // 显示弹窗
+                $('#nurseModal').modal('show');
+            });
+
+            // 指定服务主管按钮点击事件
+            $(document).on('click', '.assign-manager-btn', function() {
+                const nurseId = $(this).data('id');
+                currentAssignNurseId = nurseId;
+                
+                // 从表格行中获取当前服务主管
+                const $row = $(this).closest('tr');
+                const currentManagerName = $row.find('td:eq(5) .manager-badge').text().trim();
+                
+                // 加载服务主管列表
+                loadServiceSupervisors('#assignManagerId');
+                
+                // 显示弹窗
+                $('#assignManagerModal').modal('show');
+            });
+
+            // 锁定/解锁护理员按钮点击事件
+            $(document).on('click', '.lock-nurse-btn, .unlock-nurse-btn', function() {
+                const nurseId = $(this).data('id');
+                const status = $(this).data('status');
+                const action = status === 'active' ? '锁定' : '解锁';
+                const confirmMsg = `确定要${action}该护理员吗？${action}后护理员将无法登录系统。`;
+
+                if (confirm(confirmMsg)) {
+                    // 模拟API请求（实际项目中发送AJAX请求）
+                    console.log(`护理员${nurseId}已${action}`);
+                    // 更新按钮状态和文本
+                    if (status === 'active') {
+                        $(this).removeClass('btn-danger lock-nurse-btn').addClass('btn-outline-secondary unlock-nurse-btn');
+                        $(this).data('status', 'locked');
+                        $(this).html('<i class="fa fa-unlock"></i> 解锁');
+                        // 更新状态列
+                        $(this).closest('tr').find('.status-active').removeClass('status-active').addClass('status-locked').html('<i class="fa fa-lock"></i> 锁定');
+                    } else {
+                        $(this).removeClass('btn-outline-secondary unlock-nurse-btn').addClass('btn-danger lock-nurse-btn');
+                        $(this).data('status', 'active');
+                        $(this).html('<i class="fa fa-lock"></i> 锁定');
+                        // 更新状态列
+                        $(this).closest('tr').find('.status-locked').removeClass('status-locked').addClass('status-active').html('<i class="fa fa-check-circle"></i> 正常');
+                    }
+                    alert(`护理员已成功${action}！`);
+                }
+            });
+
+            // 保存护理员按钮点击事件
+            $('#saveNurseBtn').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 表单校验
+                const nurseName = $('#nurseName').val().trim();
+                const nurseAccount = $('#nurseAccount').val().trim();
+                const nursePassword = $('#nursePassword').val().trim();
+                const nurseGender = $('#nurseGender').val();
+                const nurseSelfId = $('#nurseSelfId').val().trim();
+                const nursePhone = $('#nursePhone').val().trim();
+                const nurseManagerId = $('#nurseManagerId').val();
+
+                if (!nurseName) {
+                    alert('请输入护理员姓名');
+                    return;
+                }
+                if (!nurseAccount) {
+                    alert('请设置登录账号');
+                    return;
+                }
+                if (nurseAccount.length < 6 || nurseAccount.length > 20) {
+                    alert('登录账号长度为6-20位');
+                    return;
+                }
+                const isAddMode = $('#nurseModalTitle').text() === '新增护理员';
+                if (isAddMode && !nursePassword) {
+                    alert('请设置登录密码');
+                    return;
+                }
+                if (!nurseGender) {
+                    alert('请选择性别');
+                    return;
+                }
+                if (!nurseSelfId) {
+                    alert('请输入身份证号');
+                    return;
+                }
+                if (nurseSelfId.length !== 18) {
+                    alert('身份证号必须为18位');
+                    return;
+                }
+                if (!nursePhone) {
+                    alert('请输入手机号');
+                    return;
+                }
+                if (nursePhone.length !== 11 || !/^1[3-9]\d{9}$/.test(nursePhone)) {
+                    alert('请输入正确的11位手机号');
+                    return;
+                }
+                if (!nurseManagerId) {
+                    alert('请选择服务主管');
+                    return;
+                }
+
+                // 构造保存数据
+                const saveData = {
+                    name: nurseName,
+                    login_name: nurseAccount,
+                    login_pass: nursePassword || null,
+                    gender: nurseGender,
+                    selfid: nurseSelfId,
+                    birthday: $('#nurseBirthday').val() || null,
+                    phone_num: nursePhone,
+                    address: $('#nurseAddress').val().trim() || null,
+                    contacts: $('#nurseContacts').val().trim() || null,
+                    con_phone_num: $('#nurseConPhone').val().trim() || null,
+                    edu_level: $('#nurseEduLevel').val() || null,
+                    manager_id: nurseManagerId,
+                    abb_name: $('#nurseAbbName').val().trim() || null,
+                    group_id: $('#nurseGroupId').val() || null,
+                    group_idx: $('#nurseGroupIdx').val() || null,
+                    roles: ['nurse']  // 护理员角色
+                };
+                
+                // 如果是编辑模式，添加护理员ID
+                if (!isAddMode && currentEditNurseId) {
+                    saveData.id = currentEditNurseId;
+                }
+
+                // 模拟保存请求（实际项目中替换为AJAX请求）
+                try {
+                    console.log('保存护理员信息:', saveData);
+                    
+                    // 演示环境：模拟保存成功并更新表格
+                    if (isAddMode) {
+                        alert('护理员信息保存成功！');
+                    } else {
+                        alert('护理员信息保存成功！');
+                    }
+                    
+                    // 关闭弹窗
+                    $('#nurseModal').modal('hide');
+                    // 刷新列表（实际项目中应重新加载数据）
+                    location.reload();
+                    
+                } catch (error) {
+                    alert('保存失败：' + error.message);
+                }
+            });
+
+            // 确认指定服务主管按钮点击事件
+            $('#confirmAssignBtn').click(function() {
+                const managerId = $('#assignManagerId').val();
+                if (!managerId) {
+                    alert('请选择服务主管');
+                    return;
+                }
+
+                // 模拟保存请求（实际项目中替换为AJAX请求）
+                try {
+                    console.log(`为护理员${currentAssignNurseId}指定服务主管: ${managerId}`);
+                    
+                    // 更新表格中的服务主管显示
+                    const $row = $(`.assign-manager-btn[data-id="${currentAssignNurseId}"]`).closest('tr');
+                    const managerName = $('#assignManagerId option:selected').text().split(' (')[0];
+                    $row.find('td:eq(6) .manager-badge').text(managerName);
+                    
+                    alert('服务主管指定成功！');
+                    // 关闭弹窗
+                    $('#assignManagerModal').modal('hide');
+                    
+                } catch (error) {
+                    alert('指定失败：' + error.message);
+                }
+            });
+
+            // 查询按钮点击事件
+            $('#searchBtn').click(function() {
+                // 实际项目中发送AJAX请求查询护理员列表
+                console.log('查询护理员列表');
+                alert('查询功能待实现');
+            });
+
+            // 重置按钮点击事件
+            $('#resetBtn').click(function() {
+                $('#filterManager').val('');
+                $('#filterStatus').val('');
+                $('#filterKeyword').val('');
+            });
+
+            // 查看档案按钮点击事件（在详情弹窗中显示）
+            $(document).on('click', '.view-archive-btn', function() {
+                const nurseId = $(this).data('id');
+                // 显示护理员详情，包含档案信息
+                showNurseDetail(nurseId);
+                setTimeout(() => {
+                    $('#nurse-archive-info-tab').click();
+                }, 300);
+            });
+            
+            // 显示护理员详情
+            function showNurseDetail(nurseId) {
+                const $row = $(`.view-archive-btn[data-id="${nurseId}"]`).closest('tr');
+                const name = $row.find('td:eq(1)').text().trim();
+                const account = $row.find('td:eq(2)').text().trim();
+                const abbName = $row.find('td:eq(3)').text().trim();
+                const gender = $row.find('td:eq(4)').text().trim();
+                const phone = $row.find('td:eq(5)').text().trim().replace(/\*/g, '');
+                const manager = $row.find('td:eq(6) .manager-badge').text().trim();
+                const group = $row.find('td:eq(7)').text().trim();
+                const fileId = $row.find('td:eq(8)').text().trim();
+                
+                // 基本信息
+                const basicInfoHtml = `
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">姓名</label>
+                                <div class="form-control-plaintext">${name}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">登录账号</label>
+                                <div class="form-control-plaintext">${account}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">简称</label>
+                                <div class="form-control-plaintext">${abbName}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">性别</label>
+                                <div class="form-control-plaintext">${gender}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">联系电话</label>
+                                <div class="form-control-plaintext">${phone}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">服务主管</label>
+                                <div class="form-control-plaintext">${manager}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">所属分组</label>
+                                <div class="form-control-plaintext">${group}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">档案编号</label>
+                                <div class="form-control-plaintext">${fileId}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 护理员档案信息
+                const archiveHtml = `
+                    <div class="mb-4 mt-3">
+                        <h6><i class="fa fa-file-text"></i> 身份证</h6>
+                        <div class="archive-files">
+                            <div class="archive-file-item">
+                                <img src="https://via.placeholder.com/150x120?text=身份证正面" alt="身份证正面">
+                                <div class="file-name">身份证正面.jpg</div>
+                            </div>
+                            <div class="archive-file-item">
+                                <img src="https://via.placeholder.com/150x120?text=身份证反面" alt="身份证反面">
+                                <div class="file-name">身份证反面.jpg</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6><i class="fa fa-file-text"></i> 职业技能证书</h6>
+                        <div class="archive-files">
+                            <div class="archive-file-item">
+                                <img src="https://via.placeholder.com/150x120?text=证书1" alt="证书1">
+                                <div class="file-name">护理员证书1.jpg</div>
+                            </div>
+                            <div class="archive-file-item">
+                                <img src="https://via.placeholder.com/150x120?text=证书2" alt="证书2">
+                                <div class="file-name">护理员证书2.jpg</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6><i class="fa fa-file-text"></i> 服务合同</h6>
+                        <div class="archive-files">
+                            <div class="archive-file-item">
+                                <img src="https://via.placeholder.com/150x120?text=合同" alt="合同">
+                                <div class="file-name">服务合同.pdf</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#viewNurseModalTitle').text(`护理员详情 - ${name}`);
+                $('#viewNurseModalBody').html(basicInfoHtml);
+                $('#viewNurseArchiveBody').html(archiveHtml);
+                $('#viewNurseModal').modal('show');
+            }
+            
+            // 从查看详情跳转到编辑
+            $('#editNurseFromViewBtn').click(function() {
+                $('#viewNurseModal').modal('hide');
+                // 需要保存当前查看的护理员ID
+                const nurseId = $('.view-archive-btn').data('id');
+                if (nurseId) {
+                    $(`.edit-nurse-btn[data-id="${nurseId}"]`).click();
+                }
+            });
+            
+            // ========== 二维码功能 ==========
+            // 二维码配置信息（实际项目中应该从后端获取）
+            const qrcodeConfig = {
+                server: 'http://192.168.1.100',
+                port: '8080',
+                username: 'admin',
+                password: 'admin123456'
+            };
+            
+            // 头像点击事件
+            $('#userAvatar').click(function() {
+                // 更新显示信息
+                $('#qrcodeServer').text(qrcodeConfig.server);
+                $('#qrcodePort').text(qrcodeConfig.port);
+                $('#qrcodeUsername').text(qrcodeConfig.username);
+                $('#qrcodePassword').text('•'.repeat(qrcodeConfig.password.length));
+                
+                const qrcodeModal = new bootstrap.Modal('#qrcodeModal');
+                
+                // 等待模态框完全显示后再生成二维码（使用one确保只触发一次）
+                $('#qrcodeModal').one('shown.bs.modal', function () {
+                    generateQRCode();
+                });
+                
+                qrcodeModal.show();
+            });
+            
+            // 生成二维码
+            function generateQRCode() {
+                // 构建二维码数据（JSON格式）
+                const qrcodeData = {
+                    type: 'app_login',
+                    server: qrcodeConfig.server,
+                    port: qrcodeConfig.port,
+                    username: qrcodeConfig.username,
+                    password: qrcodeConfig.password,
+                    timestamp: new Date().getTime()
+                };
+                
+                const qrcodeString = JSON.stringify(qrcodeData);
+                
+                // 获取canvas元素
+                const canvas = document.getElementById('qrcodeCanvas');
+                
+                // 生成二维码
+                QRCode.toCanvas(canvas, qrcodeString, {
+                    width: 300,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        console.error('二维码生成失败:', error);
+                        alert('二维码生成失败，请重试');
+                    }
+                });
+            }
+            
+            // 下载二维码
+            $('#downloadQrcodeBtn').click(function() {
+                const canvas = document.getElementById('qrcodeCanvas');
+                const url = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'app_login_qrcode_' + new Date().getTime() + '.png';
+                link.href = url;
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>
+

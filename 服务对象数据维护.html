@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>服务对象数据维护 - 居家长护业务管理系统</title>
+  <!-- 引入外部资源 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  
+  <style>
+    /* 继承全局样式 */
+    body { font-family: "微软雅黑", "思源黑体", sans-serif; background-color: #f5f7fa; color: #333; }
+    .btn-primary { background-color: #1890FF; border-color: #1890FF; }
+    .btn-primary:hover { background-color: #096DD9; border-color: #096DD9; }
+    .btn-outline-secondary { border-color: #ddd; color: #666; }
+    .btn-outline-secondary:hover { background-color: #f5f5f5; border-color: #ccc; }
+    .btn-danger { background-color: #FF4D4F; border-color: #FF4D4F; }
+    .btn-danger:hover { background-color: #F5222D; border-color: #F5222D; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0; padding: 15px 20px; font-weight: 600; font-size: 15px; }
+    .card-body { padding: 20px; }
+    /* 布局样式 */
+    .app-container { display: flex; min-height: 100vh; }
+    /* 侧边导航 */
+    .sidebar { width: 220px; background: #fff; box-shadow: 1px 0 2px rgba(0,0,0,0.05); padding: 20px 0; flex-shrink: 0; }
+    .sidebar-logo { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+    .sidebar-logo img { height: 40px; margin-bottom: 8px; }
+    .sidebar-logo h3 { font-size: 16px; color: #1890FF; font-weight: 600; margin: 0; }
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link { display: flex; align-items: center; padding: 12px 20px; color: #666; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+    .nav-link:hover, .nav-link.active { color: #1890FF; background-color: #f0f7ff; border-left: 3px solid #1890FF; }
+    .nav-link i { font-size: 18px; margin-right: 12px; width: 20px; text-align: center; }
+    .nav-group-title { padding: 15px 20px 5px; font-size: 12px; color: #999; font-weight: 500; }
+    /* 主内容区 */
+    .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+    /* 顶部导航 */
+    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page-title { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+    .user-info { display: flex; align-items: center; }
+    .notification { position: relative; margin-right: 20px; cursor: pointer; }
+    .notification i { font-size: 20px; color: #666; }
+    .notification-badge { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #FF4D4F; color: #fff; border-radius: 50%; font-size: 12px; text-align: center; line-height: 18px; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #1890FF; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; margin-right: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .user-avatar:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3); }
+    .user-name { font-size: 14px; font-weight: 500; }
+    /* 二维码模态框样式 */
+    .qrcode-modal .modal-body { text-align: center; padding: 30px; }
+    .qrcode-container { display: inline-block; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .qrcode-container canvas { display: block; margin: 0 auto; }
+    .qrcode-info { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    .qrcode-info-item { margin-bottom: 10px; font-size: 14px; }
+    .qrcode-info-item:last-child { margin-bottom: 0; }
+    .qrcode-info-label { color: #666; font-weight: 500; display: inline-block; width: 100px; }
+    .qrcode-info-value { color: #333; }
+    .qrcode-tip { color: #666; font-size: 13px; margin-top: 15px; line-height: 1.6; }
+    /* 服务对象维护专属样式 */
+    .search-row { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
+    .search-col { flex: 1; min-width: 150px; }
+    .form-label { font-weight: 500; }
+    .table th { 
+      font-size: 13px; 
+      color: #999; 
+      text-align: center; 
+      font-weight: 600;
+      background-color: #f8f9fa;
+    }
+    .table td { 
+      font-size: 13px; 
+      vertical-align: middle; 
+      text-align: center; 
+    }
+    .table .text-primary { 
+      cursor: pointer; 
+      color: #1890FF;
+      text-decoration: none;
+    }
+    .table .text-primary:hover { 
+      text-decoration: underline; 
+      color: #096DD9;
+    }
+    .table .text-muted {
+      color: #999;
+      margin: 0 5px;
+    }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .status-normal { background-color: #E6F7E6; color: #52C41A; }
+    .status-pause { background-color: #FFF7E6; color: #FAAD14; }
+    .status-transfer { background-color: #E6F7FF; color: #1890FF; }
+    .status-death { background-color: #FFE6E6; color: #FF4D4F; }
+    .modal-lg { max-width: 800px; }
+    .form-text.text-danger { font-size: 12px; }
+    .upload-area { 
+      border: 2px dashed #dee2e6; 
+      border-radius: 8px; 
+      padding: 20px; 
+      text-align: center; 
+      transition: all 0.3s ease; 
+      cursor: pointer; 
+      background-color: transparent;
+    }
+    .upload-area:hover { 
+      border-color: #1890FF; 
+      background-color: rgba(24, 144, 255, 0.05); 
+    }
+    .upload-area i { 
+      font-size: 24px; 
+      color: #1890FF; 
+      margin-bottom: 8px; 
+      display: block;
+    }
+    .upload-area p {
+      margin: 0;
+      color: #666;
+      font-size: 13px;
+    }
+    .uploaded-file { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 8px; 
+      background-color: #f5f5f5; 
+      border-radius: 4px; 
+      margin-top: 10px; 
+    }
+    .uploaded-file span { 
+      flex: 1; 
+      text-overflow: ellipsis; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      font-size: 12px; 
+      color: #333;
+    }
+    .uploaded-file button { 
+      background: none; 
+      border: none; 
+      color: #FF4D4F; 
+      cursor: pointer; 
+      padding: 0 8px; 
+      font-size: 14px;
+    }
+    .uploaded-file button:hover { 
+      color: #F5222D; 
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 侧边导航 -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+          <img src="https://via.placeholder.com/80x40?text=居家长护" alt="系统Logo">
+          <h3>管理员工作平台</h3>
+      </div>
+      
+      <!-- 导航分组：系统配置 -->
+      <div class="nav-group-title">系统配置</div>
+      <ul class="nav-menu">
+          <li class="nav-item">
+              <a href="index.html" class="nav-link">
+                  <i class="fa fa-building-o"></i>
+                  <span>机构信息配置</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="套餐管理.html" class="nav-link">
+                  <i class="fa fa-cog"></i>
+                  <span>套餐管理</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="行政区划.html" class="nav-link">
+                  <i class="fa fa-book"></i>
+                  <span>行政区域管理</span>
+              </a>
+          </li>
+      </ul>
+      
+      <!-- 导航分组：用户管理 -->
+      <div class="nav-group-title">用户管理</div>
+      <ul class="nav-menu">
+          <li class="nav-item">
+              <a href="角色配置.html" class="nav-link">
+                  <i class="fa fa-user-secret"></i>
+                  <span>角色权限配置</span>
+              </a>
+          </li>
+          <li class="nav-item">
+            <a href="护理员管理.html" class="nav-link">
+                <i class="fa fa-user-md"></i>
+                <span>护理员管理</span>
+            </a>
+        </li>
+        <li class="nav-item">
+          <a href="服务对象管理.html" class="nav-link">
+              <i class="fa fa-users"></i>
+              <span>服务对象管理</span>
+          </a>
+      </li>
+      </ul>
+      
+      <!-- 导航分组：日志管理 -->
+      <div class="nav-group-title">数据管理</div>
+      <ul class="nav-menu">
+          <li class="nav-item">
+              <a href="服务线索批量导入.html" class="nav-link">
+                  <i class="fa fa-upload"></i>
+                  <span>服务对象数据批量导入</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="服务对象数据维护.html" class="nav-link active">
+                  <i class="fa fa-edit"></i>
+                  <span>服务对象数据维护</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="医保工单导入.html" class="nav-link">
+                  <i class="fa fa-file-excel-o"></i>
+                  <span>医保平台工单导入</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="医保平台新增服务对象数据.html" class="nav-link">
+                  <i class="fa fa-download"></i>
+                  <span>医保平台新增服务对象数据导出</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="医保对账数据管理.html" class="nav-link">
+                  <i class="fa fa-calculator"></i>
+                  <span>医保对账数据管理</span>
+              </a>
+          </li>
+          <li class="nav-item">
+              <a href="关键数据配置.html" class="nav-link">
+                  <i class="fa fa-wrench"></i>
+                  <span>业务数据维护</span>
+              </a>
+          </li>
+      </ul>
+  </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 顶部导航：标题 + 操作按钮 -->
+      <div class="top-nav">
+        <h1 class="page-title">服务对象数据维护</h1>
+        <div class="user-info">
+          <div class="notification">
+            <i class="fa fa-bell-o"></i>
+            <span class="notification-badge">3</span>
+          </div>
+          <div class="user-avatar" id="userAvatar" title="点击生成App登录二维码">管</div>
+          <div class="user-name">系统管理员</div>
+        </div>
+      </div>
+
+      <!-- 筛选区 + 表格区 -->
+      <div class="card">
+        <div class="card-body">
+          <!-- 筛选条件 -->
+          <div class="search-row">
+            <div class="search-col">
+              <label for="searchName" class="form-label">姓名</label>
+              <input type="text" class="form-control" id="searchName" placeholder="请输入姓名模糊搜索">
+            </div>
+            <div class="search-col">
+              <label for="searchIdCard" class="form-label">身份证号</label>
+              <input type="text" class="form-control" id="searchIdCard" placeholder="请输入身份证号模糊搜索">
+            </div>
+            <div class="search-col">
+              <label for="searchRegion" class="form-label">行政区域</label>
+              <select class="form-select" id="searchRegion">
+                <option value="">全部区域</option>
+                <option value="1">社区A</option>
+                <option value="2">社区B</option>
+                <option value="3">村镇C</option>
+                <option value="4">村镇D</option>
+              </select>
+            </div>
+            <div class="search-col">
+              <label for="searchStatus" class="form-label">服务状态</label>
+              <select class="form-select" id="searchStatus">
+                <option value="">全部状态</option>
+                <option value="normal">正常</option>
+                <option value="pause">暂停</option>
+                <option value="transfer">转出</option>
+                <option value="death">死亡</option>
+              </select>
+            </div>
+            <div class="search-col" style="flex: none;">
+              <button id="searchBtn" class="btn btn-primary w-100">
+                <i class="fa fa-search"></i> 查询
+              </button>
+            </div>
+          </div>
+
+          <!-- 服务对象列表 -->
+          <div class="table-responsive">
+            <table class="table table-hover table-striped">
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>性别</th>
+                  <th>身份证号</th>
+                  <th>手机号</th>
+                  <th>居住地</th>
+                  <th>失能等级</th>
+                  <th>医保类型</th>
+                  <th>服务状态</th>
+                  <th>外勤评估日期</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="serviceObjectTable">
+                <!-- 模拟数据 -->
+                <tr>
+                  <td>张三</td>
+                  <td>女</td>
+                  <td>110101********1234</td>
+                  <td>13800138001</td>
+                  <td>社区A</td>
+                  <td>重度（一级）</td>
+                  <td>职工医保</td>
+                  <td><span class="status-badge status-normal">正常</span></td>
+                  <td>2024-01-15</td>
+                  <td>
+                    <a href="#" class="text-primary edit-btn" data-id="1" data-name="张三">编辑</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>李四</td>
+                  <td>男</td>
+                  <td>110102********5678</td>
+                  <td>13800138002</td>
+                  <td>社区B</td>
+                  <td>重度（二级）</td>
+                  <td>居民医保</td>
+                  <td><span class="status-badge status-pause">暂停</span></td>
+                  <td>2024-02-20</td>
+                  <td>
+                    <a href="#" class="text-primary edit-btn" data-id="2" data-name="李四">编辑</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>王五</td>
+                  <td>女</td>
+                  <td>110103********9012</td>
+                  <td>13800138003</td>
+                  <td>村镇C</td>
+                  <td>重度（三级）</td>
+                  <td>职工医保</td>
+                  <td><span class="status-badge status-transfer">转出</span></td>
+                  <td>2024-03-10</td>
+                  <td>
+                    <a href="#" class="text-primary edit-btn" data-id="3" data-name="王五">编辑</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>赵六</td>
+                  <td>男</td>
+                  <td>110104********3456</td>
+                  <td>13800138004</td>
+                  <td>村镇D</td>
+                  <td>轻度</td>
+                  <td>居民医保</td>
+                  <td><span class="status-badge status-death">死亡</span></td>
+                  <td>2024-04-05</td>
+                  <td>
+                    <a href="#" class="text-primary edit-btn" data-id="4" data-name="赵六">编辑</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控件 -->
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted">共 12 条数据，当前第 1 页</div>
+            <nav aria-label="Page navigation">
+              <ul class="pagination pagination-sm">
+                <li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+              </ul>
+            </nav>
+          </div>
+
+          <!-- 导出按钮 -->
+          <button id="exportBtn" class="btn btn-outline-secondary mt-2">
+            <i class="fa fa-download"></i> 导出列表
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框1：基础数据编辑 -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">编辑服务对象 - <span id="editObjectName">张三</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <form id="editForm">
+            <input type="hidden" id="editObjectId">
+            
+            <!-- 基本信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2">基本信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editName" class="form-label">姓名 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editName" value="张三" disabled>
+                <div class="form-text text-muted">核心信息不可修改</div>
+              </div>
+              <div class="col-md-6">
+                <label for="editGender" class="form-label">性别</label>
+                <select class="form-select" id="editGender">
+                  <option value="">请选择</option>
+                  <option value="男">男</option>
+                  <option value="女" selected>女</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editIdCard" class="form-label">身份证号</label>
+                <input type="text" class="form-control" id="editIdCard" value="110101********1234" disabled>
+                <div class="form-text text-muted">核心信息不可修改</div>
+              </div>
+              <div class="col-md-6">
+                <label for="editPhoneNum" class="form-label">手机号 <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="editPhoneNum" value="13800138000" placeholder="请输入11位手机号" maxlength="11">
+                <div class="form-text text-danger" id="editPhoneError" style="display: none;">请输入有效的11位手机号</div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="editStreetId" class="form-label">乡镇/街道 <span class="text-danger">*</span></label>
+                <select class="form-select" id="editStreetId">
+                  <option value="">请选择</option>
+                  <option value="1">街道A</option>
+                  <option value="2">街道B</option>
+                  <option value="3">乡镇C</option>
+                  <option value="4">乡镇D</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editCommunityId" class="form-label">村屯/社区 <span class="text-danger">*</span></label>
+                <select class="form-select" id="editCommunityId" disabled>
+                  <option value="">请先选择乡镇/街道</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editCellId" class="form-label">居住地小区/自然村 <span class="text-danger">*</span></label>
+                <select class="form-select" id="editCellId" disabled>
+                  <option value="">请先选择村屯/社区</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label for="editAddress" class="form-label">具体住址 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="editAddress" value="北京市朝阳区XX路XX小区1号楼1单元101室" placeholder="请输入详细居住地址">
+              </div>
+            </div>
+
+            <!-- 代理人信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">代理人信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editAgent" class="form-label">代理人姓名</label>
+                <input type="text" class="form-control" id="editAgent" placeholder="请输入代理人姓名">
+              </div>
+              <div class="col-md-6">
+                <label for="editAgentPhone" class="form-label">代理人手机号</label>
+                <input type="tel" class="form-control" id="editAgentPhone" placeholder="请输入11位手机号" maxlength="11">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editAgentId" class="form-label">代理人身份证号</label>
+                <input type="text" class="form-control" id="editAgentId" placeholder="请输入18位身份证号" maxlength="18">
+              </div>
+              <div class="col-md-6">
+                <label for="editRelation" class="form-label">代理人关系</label>
+                <select class="form-select" id="editRelation">
+                  <option value="">请选择</option>
+                  <option value="1">配偶</option>
+                  <option value="2">子女</option>
+                  <option value="3">父母</option>
+                  <option value="4">其他</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 失能相关信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">失能相关信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="editDisLevel" class="form-label">失能等级</label>
+                <select class="form-select" id="editDisLevel">
+                  <option value="">请选择</option>
+                  <option value="1">轻度</option>
+                  <option value="2">中度</option>
+                  <option value="3">重度（一级）</option>
+                  <option value="4">重度（二级）</option>
+                  <option value="5">重度（三级）</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editDisabledLevel" class="form-label">残疾等级</label>
+                <select class="form-select" id="editDisabledLevel">
+                  <option value="">请选择</option>
+                  <option value="1">一级</option>
+                  <option value="2">二级</option>
+                  <option value="3">三级</option>
+                  <option value="4">四级</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="editDisReason" class="form-label">失能原因</label>
+                <select class="form-select" id="editDisReason">
+                  <option value="">请选择</option>
+                  <option value="1">疾病</option>
+                  <option value="2">意外</option>
+                  <option value="3">年老</option>
+                  <option value="4">其他</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 医保信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">医保信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editMedicalType" class="form-label">医保类型</label>
+                <select class="form-select" id="editMedicalType">
+                  <option value="">请选择</option>
+                  <option value="1" selected>职工医保</option>
+                  <option value="2">居民医保</option>
+                  <option value="3">其他</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="editOtherRegion" class="form-label">是否本省异地参保</label>
+                <select class="form-select" id="editOtherRegion">
+                  <option value="">请选择</option>
+                  <option value="1">是</option>
+                  <option value="0" selected>否</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editMla" class="form-label">是否低保户</label>
+                <select class="form-select" id="editMla">
+                  <option value="">请选择</option>
+                  <option value="1">是</option>
+                  <option value="0" selected>否</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 地理信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">地理信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="editLatitude" class="form-label">地理经度</label>
+                <div class="input-group">
+                  <input type="number" step="any" class="form-control" id="editLatitude" placeholder="请通过GIS选择" readonly>
+                  <button type="button" class="btn btn-outline-primary" id="selectGisBtn">
+                    <i class="fa fa-map-marker"></i> GIS选择
+                  </button>
+                </div>
+                <div class="form-text text-muted">经纬度只能通过GIS功能选择</div>
+              </div>
+              <div class="col-md-4">
+                <label for="editLongitude" class="form-label">地理纬度</label>
+                <input type="number" step="any" class="form-control" id="editLongitude" placeholder="请通过GIS选择" readonly>
+              </div>
+              <div class="col-md-4">
+                <label for="editMarkAddr" class="form-label">信标地址</label>
+                <input type="text" class="form-control" id="editMarkAddr" placeholder="请输入信标地址">
+              </div>
+            </div>
+
+            <!-- 日期信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">日期信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editTabDate" class="form-label bg-danger text-white px-2 py-1 rounded">外勤上门评估日期 <span class="text-white">*</span></label>
+                <input type="date" class="form-control border-danger" id="editTabDate" style="border-left-width: 3px;">
+                <div class="form-text text-danger">红色字段：外勤评估时必须填写</div>
+              </div>
+              <div class="col-md-6">
+                <label for="editSubDate" class="form-label">机构提交材料日期</label>
+                <input type="date" class="form-control" id="editSubDate">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editPubDate" class="form-label">公示日期</label>
+                <input type="date" class="form-control" id="editPubDate">
+              </div>
+              <div class="col-md-6">
+                <label for="editSigDate" class="form-label">签约送达日期</label>
+                <input type="date" class="form-control" id="editSigDate">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editExpFirstDate" class="form-label">预期首次服务日期</label>
+                <input type="date" class="form-control" id="editExpFirstDate" placeholder="用于提前上报">
+              </div>
+              <div class="col-md-6">
+                <label for="editProDate" class="form-label">提供线索的日期</label>
+                <input type="date" class="form-control" id="editProDate" placeholder="自行摸排为空">
+              </div>
+            </div>
+
+            <!-- 其他信息 -->
+            <h6 class="mb-3 text-primary border-bottom pb-2 mt-4">其他信息</h6>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="editOpId" class="form-label">外勤标识</label>
+                <select class="form-select" id="editOpId">
+                  <option value="">请选择</option>
+                  <option value="1">外勤A（ID:001）</option>
+                  <option value="2">外勤B（ID:002）</option>
+                  <option value="3">外勤C（ID:003）</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">线索提供人 <span class="text-muted">(二选一)</span></label>
+                <div class="d-flex gap-2">
+                  <select class="form-select" id="editSalesId" style="flex: 1;">
+                    <option value="">线索提供人标识</option>
+                    <option value="1">销售A（ID:001）</option>
+                    <option value="2">销售B（ID:002）</option>
+                  </select>
+                  <span class="align-self-center text-muted">或</span>
+                  <input type="text" class="form-control" id="editSalesName" placeholder="外部人员姓名" style="flex: 1;">
+                </div>
+                <div class="form-text text-muted">线索提供人标识和外部人员只能选择其一</div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label for="editNoserReason" class="form-label">不开始服务说明</label>
+                <input type="text" class="form-control" id="editNoserReason" placeholder="签约时不开始服务说明">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="saveEditBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框2：操作成功提示 -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-body text-center py-4">
+          <i class="fa fa-check-circle text-success" style="font-size: 48px; margin-bottom: 15px;"></i>
+          <h5 class="modal-title">操作成功</h5>
+          <p class="text-muted" id="successMsg">基础信息已成功保存</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知模态框 -->
+  <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-bell-o"></i> 系统通知
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="notificationList">
+            <!-- 通知列表将通过JavaScript动态生成 -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary" id="markAllReadBtn">全部标记为已读</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 页面加载完成后初始化
+    $(function() {
+      // 初始化模态框
+      const editModal = new bootstrap.Modal('#editModal');
+      const successModal = new bootstrap.Modal('#successModal');
+
+      // 1. 查询按钮点击事件（模拟筛选）
+      $('#searchBtn').click(function() {
+        // 这里仅做UI反馈，实际项目中需调用后端接口筛选数据
+        const name = $('#searchName').val().trim();
+        const idCard = $('#searchIdCard').val().trim();
+        const region = $('#searchRegion').val();
+        const status = $('#searchStatus').val();
+        
+        console.log('筛选条件：', { name, idCard, region, status });
+        alert('已根据条件筛选，共找到 4 条匹配数据（模拟）');
+      });
+
+      // 2. 导出列表按钮点击事件
+      $('#exportBtn').click(function() {
+        // 模拟导出
+        alert('正在导出服务对象列表，请稍后...');
+        // 实际项目中调用后端接口导出Excel
+        // window.location.href = '/api/export/service-objects';
+      });
+
+      // 3. 编辑按钮点击事件
+      $('.edit-btn').click(function(e) {
+        e.preventDefault();
+        const objectId = $(this).data('id');
+        const objectName = $(this).data('name');
+        
+        // 填充模态框数据（模拟从接口获取）
+        $('#editObjectId').val(objectId);
+        $('#editObjectName').text(objectName);
+        $('#editName').val(objectName);
+        // 模拟身份证号（实际项目中从接口获取完整号，前端做脱敏展示）
+        const idCard = objectId === 1 ? '110101********1234' : 
+                       objectId === 2 ? '110102********5678' : 
+                       objectId === 3 ? '110103********9012' : '110104********3456';
+        $('#editIdCard').val(idCard);
+        
+        // 模拟填充其他字段（实际项目中从接口获取）
+        $('#editGender').val(objectId % 2 === 0 ? '男' : '女');
+        $('#editPhoneNum').val('1380013800' + objectId);
+        // 初始化行政区划联动
+        const streetId = objectId <= 2 ? '1' : '3';
+        const communityId = objectId <= 2 ? '1' : '3';
+        const cellId = objectId <= 2 ? '1' : '3';
+        $('#editStreetId').val(streetId).trigger('change');
+        // 等待村屯/社区选项加载完成后再设置值
+        setTimeout(function() {
+          $('#editCommunityId').val(communityId).trigger('change');
+          // 等待小区选项加载完成后再设置值
+          setTimeout(function() {
+            $('#editCellId').val(cellId);
+          }, 100);
+        }, 100);
+        $('#editAddress').val('北京市朝阳区XX路XX小区' + objectId + '号楼1单元101室');
+        $('#editAgent').val('代理人' + objectName);
+        $('#editAgentPhone').val('1390013900' + objectId);
+        $('#editAgentId').val('');
+        $('#editRelation').val('2'); // 默认子女
+        $('#editDisLevel').val(objectId <= 2 ? '3' : '4');
+        $('#editDisabledLevel').val(objectId <= 2 ? '2' : '3');
+        $('#editDisReason').val('1');
+        $('#editMedicalType').val('1');
+        $('#editOtherRegion').val('0');
+        $('#editMla').val('0');
+        $('#editLatitude').val('');
+        $('#editLongitude').val('');
+        $('#editMarkAddr').val('');
+        $('#editTabDate').val('2024-01-15'); // 红色字段
+        $('#editSubDate').val('');
+        $('#editPubDate').val('');
+        $('#editSigDate').val('');
+        $('#editExpFirstDate').val('');
+        $('#editProDate').val('');
+        $('#editOpId').val('');
+        $('#editSalesId').val('').prop('disabled', false);
+        $('#editSalesName').val('').prop('disabled', false);
+        $('#editNoserReason').val('');
+        
+        // 重置错误提示
+        $('#editPhoneError').hide();
+        
+        // 显示模态框
+        editModal.show();
+      });
+
+      // ========== 行政区划三级联动 ==========
+      // 模拟数据：乡镇/街道 -> 村屯/社区 -> 小区/自然村
+      const regionData = {
+        '1': { // 街道A
+          name: '街道A',
+          communities: {
+            '1': { name: '社区A', cells: { '1': '小区A1', '2': '小区A2' } },
+            '2': { name: '社区B', cells: { '3': '小区B1', '4': '小区B2' } }
+          }
+        },
+        '2': { // 街道B
+          name: '街道B',
+          communities: {
+            '3': { name: '社区C', cells: { '5': '小区C1', '6': '小区C2' } },
+            '4': { name: '社区D', cells: { '7': '小区D1', '8': '小区D2' } }
+          }
+        },
+        '3': { // 乡镇C
+          name: '乡镇C',
+          communities: {
+            '5': { name: '村屯C1', cells: { '9': '自然村C1-1', '10': '自然村C1-2' } },
+            '6': { name: '村屯C2', cells: { '11': '自然村C2-1', '12': '自然村C2-2' } }
+          }
+        },
+        '4': { // 乡镇D
+          name: '乡镇D',
+          communities: {
+            '7': { name: '村屯D1', cells: { '13': '自然村D1-1', '14': '自然村D1-2' } },
+            '8': { name: '村屯D2', cells: { '15': '自然村D2-1', '16': '自然村D2-2' } }
+          }
+        }
+      };
+
+      // 乡镇/街道变化时，加载对应的村屯/社区
+      $('#editStreetId').change(function() {
+        const streetId = $(this).val();
+        const communitySelect = $('#editCommunityId');
+        const cellSelect = $('#editCellId');
+        
+        // 清空并禁用下级选择框
+        communitySelect.html('<option value="">请先选择乡镇/街道</option>').prop('disabled', true);
+        cellSelect.html('<option value="">请先选择村屯/社区</option>').prop('disabled', true);
+        
+        if (!streetId) return;
+        
+        // 加载村屯/社区选项
+        const street = regionData[streetId];
+        if (street && street.communities) {
+          communitySelect.html('<option value="">请选择</option>');
+          Object.keys(street.communities).forEach(commId => {
+            const comm = street.communities[commId];
+            communitySelect.append(`<option value="${commId}">${comm.name}</option>`);
+          });
+          communitySelect.prop('disabled', false);
+        }
+      });
+
+      // 村屯/社区变化时，加载对应的小区/自然村
+      $('#editCommunityId').change(function() {
+        const streetId = $('#editStreetId').val();
+        const communityId = $(this).val();
+        const cellSelect = $('#editCellId');
+        
+        // 清空并禁用小区选择框
+        cellSelect.html('<option value="">请先选择村屯/社区</option>').prop('disabled', true);
+        
+        if (!streetId || !communityId) return;
+        
+        // 加载小区/自然村选项
+        const street = regionData[streetId];
+        if (street && street.communities && street.communities[communityId]) {
+          const comm = street.communities[communityId];
+          cellSelect.html('<option value="">请选择</option>');
+          if (comm.cells) {
+            Object.keys(comm.cells).forEach(cellId => {
+              cellSelect.append(`<option value="${cellId}">${comm.cells[cellId]}</option>`);
+            });
+          }
+          cellSelect.prop('disabled', false);
+        }
+      });
+
+      // 辅助函数：根据乡镇/街道ID加载村屯/社区
+      function loadCommunitiesByStreet(streetId) {
+        const communitySelect = $('#editCommunityId');
+        const cellSelect = $('#editCellId');
+        
+        communitySelect.html('<option value="">请选择</option>');
+        cellSelect.html('<option value="">请先选择村屯/社区</option>').prop('disabled', true);
+        
+        if (!streetId) {
+          communitySelect.prop('disabled', true);
+          return;
+        }
+        
+        const street = regionData[streetId];
+        if (street && street.communities) {
+          Object.keys(street.communities).forEach(commId => {
+            const comm = street.communities[commId];
+            communitySelect.append(`<option value="${commId}">${comm.name}</option>`);
+          });
+          communitySelect.prop('disabled', false);
+        }
+      }
+
+      // 辅助函数：根据村屯/社区ID加载小区/自然村
+      function loadCellsByCommunity(communityId) {
+        const streetId = $('#editStreetId').val();
+        const cellSelect = $('#editCellId');
+        
+        cellSelect.html('<option value="">请选择</option>');
+        
+        if (!streetId || !communityId) {
+          cellSelect.prop('disabled', true);
+          return;
+        }
+        
+        const street = regionData[streetId];
+        if (street && street.communities && street.communities[communityId]) {
+          const comm = street.communities[communityId];
+          if (comm.cells) {
+            Object.keys(comm.cells).forEach(cellId => {
+              cellSelect.append(`<option value="${cellId}">${comm.cells[cellId]}</option>`);
+            });
+          }
+          cellSelect.prop('disabled', false);
+        }
+      }
+
+      // ========== GIS选择功能 ==========
+      $('#selectGisBtn').click(function() {
+        // 模拟GIS地图选择（实际项目中应打开GIS地图选择器）
+        const latitude = prompt('请输入或在地图上选择经度（模拟GIS功能）：', $('#editLatitude').val() || '116.397128');
+        const longitude = prompt('请输入或在地图上选择纬度（模拟GIS功能）：', $('#editLongitude').val() || '39.916527');
+        
+        if (latitude !== null && longitude !== null) {
+          if (latitude && longitude) {
+            $('#editLatitude').val(latitude);
+            $('#editLongitude').val(longitude);
+            alert('位置已选择：经度 ' + latitude + '，纬度 ' + longitude);
+          } else {
+            alert('请选择有效的位置坐标！');
+          }
+        }
+        
+        // 实际项目中应该这样实现：
+        // 1. 打开GIS地图选择器模态框
+        // 2. 用户在地图上点击选择位置
+        // 3. 获取选中位置的经纬度
+        // 4. 填充到输入框中
+      });
+
+      // ========== 线索提供人二选一逻辑 ==========
+      // 线索提供人标识变化时
+      $('#editSalesId').change(function() {
+        const salesId = $(this).val();
+        if (salesId) {
+          // 如果选择了标识，清空并禁用外部人员输入框
+          $('#editSalesName').val('').prop('disabled', true);
+        } else {
+          // 如果清空了标识，启用外部人员输入框
+          $('#editSalesName').prop('disabled', false);
+        }
+      });
+
+      // 外部人员输入框获得焦点时
+      $('#editSalesName').focus(function() {
+        // 如果线索提供人标识有值，先清空
+        if ($('#editSalesId').val()) {
+          $('#editSalesId').val('');
+        }
+        $(this).prop('disabled', false);
+      });
+
+      // 外部人员输入框输入时
+      $('#editSalesName').on('input', function() {
+        const salesName = $(this).val().trim();
+        if (salesName) {
+          // 如果输入了外部人员姓名，清空并禁用线索提供人标识
+          $('#editSalesId').val('').prop('disabled', true);
+        } else {
+          // 如果清空了外部人员姓名，启用线索提供人标识
+          $('#editSalesId').prop('disabled', false);
+        }
+      });
+
+      // 4. 保存编辑按钮点击事件
+      $('#saveEditBtn').click(function() {
+        const phoneNum = $('#editPhoneNum').val().trim();
+        const name = $('#editName').val().trim();
+        const streetId = $('#editStreetId').val();
+        const communityId = $('#editCommunityId').val();
+        const cellId = $('#editCellId').val();
+        const address = $('#editAddress').val().trim();
+        const tabDate = $('#editTabDate').val(); // 红色字段
+        const salesId = $('#editSalesId').val();
+        const salesName = $('#editSalesName').val().trim();
+        let isValid = true;
+
+        // 校验必填字段
+        if (!name) {
+          alert('姓名不能为空！');
+          isValid = false;
+        }
+        if (!phoneNum || !/^1[3-9]\d{9}$/.test(phoneNum)) {
+          $('#editPhoneError').show();
+          isValid = false;
+        } else {
+          $('#editPhoneError').hide();
+        }
+        if (!streetId) {
+          alert('请选择乡镇/街道！');
+          isValid = false;
+        }
+        if (!communityId) {
+          alert('请选择村屯/社区！');
+          isValid = false;
+        }
+        if (!cellId) {
+          alert('请选择居住地小区/自然村！');
+          isValid = false;
+        }
+        if (!address) {
+          alert('请输入具体住址！');
+          isValid = false;
+        }
+        if (!tabDate) {
+          alert('请输入外勤上门评估日期（红色字段）！');
+          isValid = false;
+        }
+        // 验证线索提供人：标识和外部人员不能同时填写
+        if (salesId && salesName) {
+          alert('线索提供人标识和外部人员只能选择其一！');
+          isValid = false;
+        }
+
+        if (!isValid) return;
+
+        // 模拟保存（实际项目中调用后端接口）
+        const objectId = $('#editObjectId').val();
+        const editData = {
+          objectId: objectId,
+          // 基本信息
+          name: name,
+          gender: $('#editGender').val(),
+          phoneNum: phoneNum,
+          streetId: streetId,
+          communityId: communityId,
+          cellId: cellId,
+          address: address,
+          // 代理人信息
+          agent: $('#editAgent').val().trim(),
+          agtPhoneNum: $('#editAgentPhone').val().trim(),
+          agentId: $('#editAgentId').val().trim(),
+          relation: $('#editRelation').val(),
+          // 失能相关信息
+          disLevel: $('#editDisLevel').val(),
+          disabledLevel: $('#editDisabledLevel').val(),
+          disReason: $('#editDisReason').val(),
+          // 医保信息
+          medicalType: $('#editMedicalType').val(),
+          otherRegion: $('#editOtherRegion').val(),
+          mla: $('#editMla').val(),
+          // 地理信息
+          latitude: $('#editLatitude').val(),
+          longitude: $('#editLongitude').val(),
+          markAddr: $('#editMarkAddr').val().trim(),
+          // 日期信息
+          tabDate: tabDate, // 红色字段
+          subDate: $('#editSubDate').val(),
+          pubDate: $('#editPubDate').val(),
+          sigDate: $('#editSigDate').val(),
+          expFirstDate: $('#editExpFirstDate').val(),
+          proDate: $('#editProDate').val(),
+          // 其他信息
+          opId: $('#editOpId').val(),
+          salesId: salesId || null,
+          salesName: salesName || null,
+          noserReason: $('#editNoserReason').val().trim()
+        };
+        
+        console.log('保存编辑：', editData);
+        
+        // 隐藏编辑模态框，显示成功提示
+        editModal.hide();
+        $('#successMsg').text('服务对象信息已成功保存');
+        successModal.show();
+      });
+
+      // ========== 通知功能 ==========
+      // 通知数据
+      let notifications = [
+        { id: 1, title: '数据维护提醒', content: '服务对象数据维护功能已更新，请及时查看。', time: '2025-12-10 14:30:25', read: false, type: 'info' },
+        { id: 2, title: '系统维护通知', content: '系统将于今晚22:00-24:00进行维护，期间可能无法访问。', time: '2025-12-10 10:15:00', read: false, type: 'warning' }
+      ];
+      
+      // 通知按钮点击事件
+      $('.notification').click(function() {
+        renderNotifications();
+        const notificationModal = new bootstrap.Modal('#notificationModal');
+        notificationModal.show();
+      });
+      
+      // 渲染通知列表
+      function renderNotifications() {
+        const notificationList = $('#notificationList');
+        if (notificationList.length === 0) return;
+        
+        notificationList.empty();
+        
+        const unreadCount = notifications.filter(n => !n.read).length;
+        $('.notification-badge').text(unreadCount > 0 ? unreadCount : '');
+        $('.notification-badge').toggle(unreadCount > 0);
+        
+        if (notifications.length === 0) {
+          notificationList.html('<div class="text-center text-muted py-4">暂无通知</div>');
+          return;
+        }
+        
+        notifications.forEach(notif => {
+          const typeClass = {
+            'success': 'text-success',
+            'warning': 'text-warning',
+            'info': 'text-info',
+            'error': 'text-danger'
+          }[notif.type] || 'text-info';
+          
+          const iconClass = {
+            'success': 'fa-check-circle',
+            'warning': 'fa-exclamation-circle',
+            'info': 'fa-info-circle',
+            'error': 'fa-times-circle'
+          }[notif.type] || 'fa-info-circle';
+          
+          notificationList.append(`
+            <div class="notification-item p-3 mb-2 border rounded ${notif.read ? '' : 'bg-light'}" data-id="${notif.id}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <i class="fa ${iconClass} ${typeClass} me-2"></i>
+                    <strong class="${notif.read ? '' : 'fw-bold'}">${notif.title}</strong>
+                    ${!notif.read ? '<span class="badge bg-danger ms-2">未读</span>' : ''}
+                  </div>
+                  <p class="text-muted mb-1 small">${notif.content}</p>
+                  <small class="text-muted">${notif.time}</small>
+                </div>
+                ${!notif.read ? '<button class="btn btn-sm btn-link mark-read-btn" data-id="' + notif.id + '">标记已读</button>' : ''}
+              </div>
+            </div>
+          `);
+        });
+      }
+      
+      // 标记单个通知为已读
+      $(document).on('click', '.mark-read-btn', function() {
+        const id = parseInt($(this).data('id'));
+        const notif = notifications.find(n => n.id === id);
+        if (notif) {
+          notif.read = true;
+          renderNotifications();
+        }
+      });
+      
+      // 全部标记为已读
+      $(document).on('click', '#markAllReadBtn', function() {
+        notifications.forEach(n => n.read = true);
+        renderNotifications();
+      });
+      
+      // 初始化通知显示
+      renderNotifications();
+      
+      // ========== 二维码功能 ==========
+      // 二维码配置信息（实际项目中应该从后端获取）
+      const qrcodeConfig = {
+        server: 'http://192.168.1.100',
+        port: '8080',
+        username: 'admin',
+        password: 'admin123456'
+      };
+      
+      // 头像点击事件
+      $('#userAvatar').click(function() {
+        // 更新显示信息
+        $('#qrcodeServer').text(qrcodeConfig.server);
+        $('#qrcodePort').text(qrcodeConfig.port);
+        $('#qrcodeUsername').text(qrcodeConfig.username);
+        $('#qrcodePassword').text('•'.repeat(qrcodeConfig.password.length));
+        
+        const qrcodeModal = new bootstrap.Modal('#qrcodeModal');
+        
+        // 等待模态框完全显示后再生成二维码（使用one确保只触发一次）
+        $('#qrcodeModal').one('shown.bs.modal', function () {
+          generateQRCode();
+        });
+        
+        qrcodeModal.show();
+      });
+      
+      // 生成二维码
+      function generateQRCode() {
+        // 构建二维码数据（JSON格式）
+        const qrcodeData = {
+          type: 'app_login',
+          server: qrcodeConfig.server,
+          port: qrcodeConfig.port,
+          username: qrcodeConfig.username,
+          password: qrcodeConfig.password,
+          timestamp: new Date().getTime()
+        };
+        
+        const qrcodeString = JSON.stringify(qrcodeData);
+        
+        // 获取canvas元素
+        const canvas = document.getElementById('qrcodeCanvas');
+        
+        // 生成二维码
+        QRCode.toCanvas(canvas, qrcodeString, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        }, function (error) {
+          if (error) {
+            console.error('二维码生成失败:', error);
+            alert('二维码生成失败，请重试');
+          }
+        });
+      }
+      
+      // 下载二维码
+      $('#downloadQrcodeBtn').click(function() {
+        const canvas = document.getElementById('qrcodeCanvas');
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'app_login_qrcode_' + new Date().getTime() + '.png';
+        link.href = url;
+        link.click();
+      });
+    });
+  </script>
+  
+  <!-- 二维码模态框 -->
+  <div class="modal fade qrcode-modal" id="qrcodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-qrcode"></i> App登录二维码
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="qrcode-container">
+            <canvas id="qrcodeCanvas"></canvas>
+          </div>
+          <div class="qrcode-info">
+            <div class="qrcode-info-item">
+              <span class="qrcode-info-label">服务地址：</span>
+              <span class="qrcode-info-value" id="qrcodeServer">http://192.168.1.100</span>
+            </div>
+            <div class="qrcode-info-item">
+              <span class="qrcode-info-label">端口：</span>
+              <span class="qrcode-info-value" id="qrcodePort">8080</span>
+            </div>
+            <div class="qrcode-info-item">
+              <span class="qrcode-info-label">账号：</span>
+              <span class="qrcode-info-value" id="qrcodeUsername">admin</span>
+            </div>
+            <div class="qrcode-info-item">
+              <span class="qrcode-info-label">密码：</span>
+              <span class="qrcode-info-value" id="qrcodePassword">••••••••</span>
+            </div>
+          </div>
+          <div class="qrcode-tip">
+            <i class="fa fa-info-circle"></i> 使用手机App扫描此二维码即可自动配置登录信息
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+          <button type="button" class="btn btn-primary" id="downloadQrcodeBtn">
+            <i class="fa fa-download"></i> 下载二维码
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
